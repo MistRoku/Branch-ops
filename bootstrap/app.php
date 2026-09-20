@@ -12,7 +12,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Strip version fingerprinting and add baseline hardening headers
+        $middleware->append(function ($request, $next) {
+            $response = $next($request);
+            $response->headers->set('X-Content-Type-Options', 'nosniff');
+            $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+            $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+            $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+            if ($request->isSecure()) {
+                $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            }
+            $response->headers->remove('X-Powered-By');
+            $response->headers->remove('Server');
+
+            return $response;
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
