@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,13 +62,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('suppliers')->name('admin.suppliers.')->group(function () {
-        // Route::get('/', [SupplierController::class, 'index'])->name('index');
-        // Route::get('/create', [SupplierController::class, 'create'])->name('create');
-        // Route::post('/', [SupplierController::class, 'store'])->name('store');
-        // Route::get('/{id}', [SupplierController::class, 'show'])->name('show');
-        // Route::get('/{id}/edit', [SupplierController::class, 'edit'])->name('edit');
-        // Route::put('/{id}', [SupplierController::class, 'update'])->name('update');
-        // Route::delete('/{id}', [SupplierController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AdminSupplierController::class, 'index'])->name('index');
+        Route::get('/create', [AdminSupplierController::class, 'create'])->name('create');
+        Route::post('/', [AdminSupplierController::class, 'store'])->name('store');
+        Route::get('/{id}', [AdminSupplierController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AdminSupplierController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminSupplierController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminSupplierController::class, 'destroy'])->name('destroy');
     });
     
     /*
