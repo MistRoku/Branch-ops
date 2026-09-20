@@ -11,4 +11,10 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        // Bind all interfaces so `npm run dev` works on Windows, Linux,
+        // WSL2 and Docker without per-OS overrides. Port stays default 5173.
+        host: true,
+        strictPort: true,
+    },
 });
