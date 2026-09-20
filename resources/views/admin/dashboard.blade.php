@@ -7,8 +7,21 @@
     <!-- Page Header -->
     <div class="flex items-center justify-between">
         <h1 class="text-xl font-semibold">Dashboard</h1>
-        <div class="text-sm text-brand-600">
-            {{ now()->format('l, F d, Y') }}
+        <div class="flex items-center gap-3">
+            @if(isset($branches) && $branches->count())
+                <form method="GET" action="{{ route('admin.dashboard') }}">
+                    <select name="branch_id" onchange="this.form.submit()"
+                        class="text-sm border border-brand-200 bg-white px-2 py-1">
+                        <option value="">All branches</option>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" @selected(($branchId ?? null) == $branch->id)>{{ $branch->name }}</option>
+                        @endforeach
+                    </select>
+                </form>
+            @endif
+            <div class="text-sm text-brand-600">
+                {{ now()->format('l, F d, Y') }}
+            </div>
         </div>
     </div>
 
@@ -77,16 +90,14 @@
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Revenue Chart (placeholder) -->
+        <!-- Revenue Chart -->
         <x-ui.card class="lg:col-span-2">
-            <h2 class="text-lg font-semibold mb-4">Revenue Overview</h2>
-            <div class="h-64 bg-brand-50 border border-brand-200 flex items-center justify-center">
-                <div class="text-center text-brand-500">
-                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    <p class="text-sm">Chart placeholder - integrate with Chart.js or similar</p>
-                </div>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">Revenue Overview</h2>
+                <span class="text-xs text-brand-500">Last 14 days</span>
+            </div>
+            <div class="h-64">
+                <canvas id="revenueChart"></canvas>
             </div>
         </x-ui.card>
 
@@ -129,14 +140,18 @@
         
         <x-ui.table :columns="['Product', 'SKU', 'Branch', 'Current Stock', 'Min Level', 'Status']">
             @forelse($lowStockItems ?? [] as $item)
-                [
-                    "{{ $item['product_name'] }}",
-                    "{{ $item['sku'] }}",
-                    "{{ $item['branch'] }}",
-                    "{{ $item['current_stock'] }}",
-                    "{{ $item['min_level'] }}",
-                    null // Will render badge below
-                ]
+                <tr class="border-b border-brand-100 last:border-0">
+                    <td class="py-2 pr-4 text-sm">{{ $item['product_name'] }}</td>
+                    <td class="py-2 pr-4 text-sm">{{ $item['sku'] }}</td>
+                    <td class="py-2 pr-4 text-sm">{{ $item['branch'] }}</td>
+                    <td class="py-2 pr-4 text-sm font-semibold text-warning">{{ $item['current_stock'] }}</td>
+                    <td class="py-2 pr-4 text-sm">{{ $item['min_level'] }}</td>
+                    <td class="py-2 text-xs">
+                        <span class="px-2 py-0.5 bg-danger/10 text-danger">
+                            {{ $item['current_stock'] <= 0 ? 'Out of stock' : 'Low' }}
+                        </span>
+                    </td>
+                </tr>
             @empty
                 <tr>
                     <td colspan="6" class="text-center py-8 text-brand-500">
@@ -148,7 +163,24 @@
     </x-ui.card>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
+const revenueCtx = document.getElementById('revenueChart');
+if (revenueCtx && window.Chart) {
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: @json($revenueLabels ?? []),
+            datasets: [{
+                label: 'Revenue (R)',
+                data: @json($revenueValues ?? []),
+                fill: true,
+                tension: 0.3,
+            }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } },
+    });
+}
 function activityFeed() {
     return {
         activities: @json($activities ?? []),
