@@ -8,6 +8,9 @@ use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Admin\StockTakeController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -141,10 +144,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('reports')->name('admin.reports.')->group(function () {
-        // Route::get('/', [ReportController::class, 'index'])->name('index');
-        // Route::get('/{id}', [ReportController::class, 'show'])->name('show');
-        // Route::get('/{id}/download', [ReportController::class, 'download'])->name('download');
-        // Route::get('/schedules', [ReportController::class, 'schedules'])->name('schedules');
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
     });
     
     /*
@@ -153,11 +154,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('documents')->name('admin.documents.')->group(function () {
-        // Route::get('/', [DocumentController::class, 'index'])->name('index');
-        // Route::post('/', [DocumentController::class, 'store'])->name('store');
-        // Route::get('/{id}', [DocumentController::class, 'show'])->name('show');
-        // Route::get('/{id}/download', [DocumentController::class, 'download'])->name('download');
-        // Route::delete('/{id}', [DocumentController::class, 'destroy'])->name('destroy');
+        Route::get('/', [DocumentController::class, 'index'])->name('index');
+        Route::post('/', [DocumentController::class, 'store'])->name('store');
+        Route::get('/{id}/download', [DocumentController::class, 'download'])->name('download');
     });
     
     /*
@@ -166,9 +165,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('notifications')->name('admin.notifications.')->group(function () {
-        // Route::get('/', [NotificationController::class, 'index'])->name('index');
-        // Route::put('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
-        // Route::put('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::put('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::put('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
     });
     
     /*
