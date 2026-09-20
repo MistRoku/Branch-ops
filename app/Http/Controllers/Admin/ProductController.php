@@ -144,9 +144,9 @@ class ProductController extends Controller
             'saleItems.sale'
         ])->findOrFail($id);
         
-        // Check authorization
+        // Check authorization - non-admins must have the product stocked in their branch
         $user = Auth::user();
-        if (!$user->isSuperAdmin() && !$user->canAccessBranch($product->stockLevels->first()?->branch_id)) {
+        if (!$user->isSuperAdmin() && !$product->stockLevels->contains('branch_id', $user->branch_id)) {
             abort(403, 'Unauthorized access to this product');
         }
         
