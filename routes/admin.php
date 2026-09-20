@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Admin\StockTakeController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -176,9 +177,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('audit-logs')->name('admin.audit-logs.')->group(function () {
-        // Route::get('/', [AuditLogController::class, 'index'])->name('index');
-        // Route::get('/{id}', [AuditLogController::class, 'show'])->name('show');
-        // Route::get('/export', [AuditLogController::class, 'export'])->name('export');
+        Route::get('/', [AuditLogController::class, 'index'])->name('index');
+        Route::get('/{id}', [AuditLogController::class, 'show'])->name('show');
     });
     
     /*
