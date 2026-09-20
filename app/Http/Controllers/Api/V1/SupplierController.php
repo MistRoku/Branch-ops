@@ -24,15 +24,16 @@ class SupplierController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Supplier::with(['products', 'purchaseOrders'])
+        $query = Supplier::withCount(['products', 'purchaseOrders'])
             ->orderBy('name');
         
         // Apply search filter
-        if ($request->has('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%")
-                  ->orWhere('phone', 'like', "%{$request->search}%");
+        if ($request->filled('search')) {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $request->search);
+            $query->where(function ($q) use ($escaped) {
+                $q->where('name', 'like', "%{$escaped}%")
+                  ->orWhere('email', 'like', "%{$escaped}%")
+                  ->orWhere('phone', 'like', "%{$escaped}%");
             });
         }
         
@@ -75,16 +76,11 @@ class SupplierController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'contact_person' => 'nullable|string|max:255',
+            'contact_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
-            'tax_number' => 'nullable|string|max:100',
-            'payment_terms' => 'nullable|string|max:255',
+            'tax_id' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -140,16 +136,11 @@ class SupplierController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'contact_person' => 'nullable|string|max:255',
+            'contact_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
-            'tax_number' => 'nullable|string|max:100',
-            'payment_terms' => 'nullable|string|max:255',
+            'tax_id' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
