@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Admin\StockTakeController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -108,13 +109,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('purchase-orders')->name('admin.purchase-orders.')->group(function () {
-        // Route::get('/', [PurchaseOrderController::class, 'index'])->name('index');
-        // Route::get('/create', [PurchaseOrderController::class, 'create'])->name('create');
-        // Route::post('/', [PurchaseOrderController::class, 'store'])->name('store');
-        // Route::get('/{id}', [PurchaseOrderController::class, 'show'])->name('show');
-        // Route::get('/{id}/receive', [PurchaseOrderController::class, 'receive'])->name('receive');
-        // Route::put('/{id}/send', [PurchaseOrderController::class, 'send'])->name('send');
-        // Route::put('/{id}/cancel', [PurchaseOrderController::class, 'cancel'])->name('cancel');
+        Route::get('/', [PurchaseOrderController::class, 'index'])->name('index');
+        Route::get('/create', [PurchaseOrderController::class, 'create'])->name('create');
+        Route::post('/', [PurchaseOrderController::class, 'store'])->name('store');
+        Route::get('/{id}', [PurchaseOrderController::class, 'show'])->name('show');
+        Route::get('/{id}/receive', function (int $id) { $po = \App\Models\PurchaseOrder::with('items.product')->findOrFail($id); return view('admin.purchase-orders.receive', compact('po')); })->name('receive');
+        Route::put('/{id}/send', [PurchaseOrderController::class, 'send'])->name('send');
+        Route::post('/{id}/receive', [PurchaseOrderController::class, 'receive'])->name('receive.store');
+        Route::put('/{id}/cancel', [PurchaseOrderController::class, 'cancel'])->name('cancel');
     });
     
     /*
