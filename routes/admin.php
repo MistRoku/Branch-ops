@@ -11,6 +11,8 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SearchPageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -186,15 +188,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('settings')->name('admin.settings.')->group(function () {
-        // Route::get('/', [SettingsController::class, 'index'])->name('index');
-        // Route::get('/branch', [SettingsController::class, 'branch'])->name('branch');
-        // Route::put('/branch', [SettingsController::class, 'updateBranch'])->name('branch.update');
-        // Route::get('/tax', [SettingsController::class, 'tax'])->name('tax');
-        // Route::put('/tax', [SettingsController::class, 'updateTax'])->name('tax.update');
-        // Route::get('/receipt', [SettingsController::class, 'receipt'])->name('receipt');
-        // Route::put('/receipt', [SettingsController::class, 'updateReceipt'])->name('receipt.update');
-        // Route::get('/profile', [SettingsController::class, 'profile'])->name('profile');
-        // Route::put('/profile', [SettingsController::class, 'updateProfile'])->name('profile.update');
-        // Route::put('/password', [SettingsController::class, 'changePassword'])->name('password.change');
+        Route::get('/', [SettingsController::class, 'index'])->name('index');
+        Route::put('/profile', [SettingsController::class, 'updateProfile'])->name('profile');
+        Route::put('/password', [SettingsController::class, 'changePassword'])->name('password');
     });
+
+    Route::get('/search', [SearchPageController::class, 'index'])->name('admin.search');
 });
