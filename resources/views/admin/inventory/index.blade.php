@@ -3,7 +3,9 @@
     Displays stock levels across all branches with filtering
 --}}
 
-<x-layouts.admin title="Inventory">
+@extends('components.layouts.admin')
+@section('title', 'Inventory')
+@section('content')
     <div class="space-y-6">
         {{-- Header Section --}}
         <div class="flex items-center justify-between border-b border-gray-200 pb-4">
@@ -165,4 +167,4 @@
             @endif
         </div>
     </div>
-</x-layouts.admin>
+@endsection

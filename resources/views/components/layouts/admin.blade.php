@@ -33,7 +33,7 @@
                             POS Terminal
                         </a>
                     </li>
-                    @if(auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager')
+                    @if(auth()->user()?->isSuperAdmin() || auth()->user()?->isBranchManager())
                     <li>
                         <a href="/admin/dashboard" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/dashboard') ? 'bg-brand-800' : '' }}">
                             Dashboard
@@ -67,6 +67,21 @@
                     <li>
                         <a href="/admin/users" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/users*') ? 'bg-brand-800' : '' }}">
                             Users
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/stock-takes" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/stock-takes*') ? 'bg-brand-800' : '' }}">
+                            Stock Takes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/documents" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/documents*') ? 'bg-brand-800' : '' }}">
+                            Documents
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/notifications" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/notifications*') ? 'bg-brand-800' : '' }}">
+                            Notifications
                         </a>
                     </li>
                     <li>
