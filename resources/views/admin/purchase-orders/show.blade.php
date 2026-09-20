@@ -6,6 +6,6 @@
 <div class="flex gap-2 mt-6">
 @if($po->status==='draft')<form method="POST" action="{{ route('admin.purchase-orders.send', $po) }}">@csrf @method('PUT')<button class="px-3 py-1 border text-sm">Send</button></form>@endif
 @if(in_array($po->status,['sent','partial_received']))<a href="{{ route('admin.purchase-orders.receive', $po) }}" class="px-3 py-1 bg-gray-900 text-white text-sm">Receive</a>@endif
-@if(in_array($po->status,['draft','sent']))<form method="POST" action="{{ route('admin.purchase-orders.cancel', $po) }}">@csrf @method('PUT')<button class="px-3 py-1 border text-sm text-red-600">Cancel</button></form>@endif
+@if(in_array($po->status,['draft','sent']))<form method="POST" action="{{ route('admin.purchase-orders.cancel', $po) }}" onsubmit="return confirm('Cancel this purchase order?')">@csrf @method('PUT')<button class="px-3 py-1 border text-sm text-red-600">Cancel</button></form>@endif
 </div></div>
 @endsection
