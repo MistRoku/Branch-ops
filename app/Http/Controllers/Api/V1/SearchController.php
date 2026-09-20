@@ -139,7 +139,7 @@ class SearchController extends Controller
             ->where('is_active', true)
             ->where(function ($q) use ($escaped) {
                 $q->where('name', 'like', "%{$escaped}%")
-                  ->orWhere('contact_person', 'like', "%{$escaped}%")
+                  ->orWhere('contact_name', 'like', "%{$escaped}%")
                   ->orWhere('email', 'like', "%{$escaped}%")
                   ->orWhere('phone', 'like', "%{$escaped}%");
             });
@@ -148,7 +148,7 @@ class SearchController extends Controller
             'id' => $supplier->id,
             'type' => 'supplier',
             'title' => $supplier->name,
-            'subtitle' => $supplier->contact_person,
+            'subtitle' => $supplier->contact_name,
             'url' => route('admin.suppliers.show', $supplier),
             'meta' => [
                 'email' => $supplier->email,
