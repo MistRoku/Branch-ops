@@ -122,9 +122,9 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <x-badge :type="$product->is_active ? 'success' : 'secondary'">
+                                    <x-ui.badge :type="$product->is_active ? 'success' : 'secondary'">
                                         {{ $product->is_active ? 'Active' : 'Inactive' }}
-                                    </x-badge>
+                                    </x-ui.badge>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">

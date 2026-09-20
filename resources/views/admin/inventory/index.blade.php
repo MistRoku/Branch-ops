@@ -135,9 +135,9 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($isLowStock)
-                                        <x-badge type="danger">Low Stock</x-badge>
+                                        <x-ui.badge type="danger">Low Stock</x-ui.badge>
                                     @else
-                                        <x-badge type="success">In Stock</x-badge>
+                                        <x-ui.badge type="success">In Stock</x-ui.badge>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
