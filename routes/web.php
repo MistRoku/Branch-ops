@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Guest routes - accessible only when not logged in
-Route::middleware('guest')->group(function () {
+Route::middleware(['guest', 'throttle:10,1'])->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 });

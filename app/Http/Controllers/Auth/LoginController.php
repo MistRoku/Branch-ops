@@ -38,14 +38,34 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
+        $user = \App\Models\User::where('email', $credentials['email'])->first();
+
+        // Reject locked accounts before attempting auth
+        if ($user && $user->isLocked()) {
+            return back()->withErrors([
+                'email' => 'Account locked until ' . $user->locked_until->format('H:i') . '. Try again later.',
+            ])->onlyInput('email');
+        }
+
+        // Reject deactivated accounts
+        if ($user && !$user->is_active) {
+            return back()->withErrors([
+                'email' => 'This account has been deactivated.',
+            ])->onlyInput('email');
+        }
+
         // Attempt to authenticate the user
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             // Regenerate session to prevent fixation attacks
             $request->session()->regenerate();
+            $request->user()->resetLoginAttempts();
 
             // Redirect to POS terminal (default landing page)
             return redirect()->intended(route('pos.terminal'));
         }
+
+        // Record failed attempt for lockout tracking
+        $user?->recordFailedLogin();
 
         // Authentication failed - redirect back with error
         return back()->withErrors([
