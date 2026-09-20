@@ -37,11 +37,18 @@ class InventoryService
         ?int $referenceId = null
     ): StockLevel {
         return DB::transaction(function () use ($productId, $branchId, $quantityAdjustment, $reason, $referenceType, $referenceId) {
-            // Get or create stock level
-            $stockLevel = StockLevel::firstOrCreate(
-                ['product_id' => $productId, 'branch_id' => $branchId],
-                ['quantity' => 0]
-            );
+            if ($quantityAdjustment === 0) {
+                throw new \InvalidArgumentException('Adjustment quantity cannot be zero');
+            }
+
+            // Lock the row to prevent concurrent adjustments racing
+            $stockLevel = StockLevel::where('product_id', $productId)
+                ->where('branch_id', $branchId)
+                ->lockForUpdate()
+                ->first() ?? StockLevel::create(
+                    ['product_id' => $productId, 'branch_id' => $branchId],
+                    ['quantity' => 0, 'valuation' => 0]
+                );
 
             $oldQuantity = $stockLevel->quantity;
             $stockLevel->quantity += $quantityAdjustment;
@@ -218,6 +225,13 @@ class InventoryService
         ?int $transferId = null
     ): array {
         return DB::transaction(function () use ($productId, $fromBranchId, $toBranchId, $quantity, $reason, $transferId) {
+            if ($fromBranchId === $toBranchId) {
+                throw new \InvalidArgumentException('Source and destination branches must differ');
+            }
+            if ($quantity <= 0) {
+                throw new \InvalidArgumentException('Transfer quantity must be positive');
+            }
+
             // Reduce stock from source branch
             $fromStock = $this->adjustStock(
                 $productId,

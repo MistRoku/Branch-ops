@@ -206,9 +206,9 @@ class InventoryController extends Controller
                 'manual'
             );
 
-            // Clear cache
-            Cache::forget('inventory_levels_*');
-            Cache::forget('inventory_valuation_*');
+            // Clear valuation cache for this branch and the all-branches view
+            Cache::forget('inventory_valuation_' . $validated['branch_id']);
+            Cache::forget('inventory_valuation_all');
 
             return redirect()->route('admin.inventory.index')
                 ->with('success', 'Stock adjusted successfully');

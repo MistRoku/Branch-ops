@@ -59,10 +59,12 @@ class DashboardController extends Controller
             ->sum('total');
 
         $lowStockItems = \App\Models\StockLevel::with(['product', 'branch'])
-            ->whereHas('product', fn($q) => $q->where('is_active', true))
-            ->whereColumn('quantity', '<=', 'reorder_level')
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->orderBy('quantity')
+            ->join('products', 'products.id', '=', 'stock_levels.product_id')
+            ->where('products.is_active', true)
+            ->whereColumn('stock_levels.quantity', '<=', 'products.reorder_level')
+            ->select('stock_levels.*')
+            ->when($branchId, fn($q) => $q->where('stock_levels.branch_id', $branchId))
+            ->orderBy('stock_levels.quantity')
             ->limit(10)
             ->get()
             ->map(fn($sl) => [
@@ -70,10 +72,11 @@ class DashboardController extends Controller
                 'sku' => $sl->product->sku,
                 'branch' => $sl->branch->name,
                 'current_stock' => $sl->quantity,
-                'min_level' => $sl->reorder_level,
+                'min_level' => $sl->product->reorder_level,
             ]);
 
-        $lowStockCount = \App\Models\StockLevel::whereColumn('quantity', '<=', 'reorder_level')
+        $lowStockCount = \App\Models\StockLevel::join('products', 'products.id', '=', 'stock_levels.product_id')
+            ->whereColumn('stock_levels.quantity', '<=', 'products.reorder_level')
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->count();
 
