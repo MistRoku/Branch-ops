@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -78,13 +79,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('transfers')->name('admin.transfers.')->group(function () {
-        // Route::get('/', [TransferController::class, 'index'])->name('index');
-        // Route::get('/create', [TransferController::class, 'create'])->name('create');
-        // Route::post('/', [TransferController::class, 'store'])->name('store');
-        // Route::get('/{id}', [TransferController::class, 'show'])->name('show');
-        // Route::put('/{id}/approve', [TransferController::class, 'approve'])->name('approve');
-        // Route::put('/{id}/reject', [TransferController::class, 'reject'])->name('reject');
-        // Route::put('/{id}/receive', [TransferController::class, 'receive'])->name('receive');
+        Route::get('/', [TransferController::class, 'index'])->name('index');
+        Route::get('/create', [TransferController::class, 'create'])->name('create');
+        Route::post('/', [TransferController::class, 'store'])->name('store');
+        Route::get('/{id}', [TransferController::class, 'show'])->name('show');
+        Route::put('/{id}/approve', [TransferController::class, 'approve'])->name('approve');
+        Route::put('/{id}/reject', [TransferController::class, 'reject'])->name('reject');
+        Route::put('/{id}/receive', [TransferController::class, 'receive'])->name('receive');
     });
     
     /*

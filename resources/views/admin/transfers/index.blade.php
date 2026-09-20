@@ -1,0 +1,6 @@
+<x-layouts.admin title="Transfers">
+<div class="space-y-4"><div class="flex justify-between border-b pb-4"><h1 class="text-2xl font-semibold">Transfers</h1><a href="{{ route('admin.transfers.create') }}" class="px-4 py-2 bg-gray-900 text-white text-sm">New Transfer</a></div>
+<div class="bg-white border"><table class="min-w-full divide-y"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs uppercase">Number</th><th class="px-6 py-3 text-left text-xs uppercase">Route</th><th class="px-6 py-3 text-left text-xs uppercase">Status</th><th class="px-6 py-3 text-right text-xs uppercase">Actions</th></tr></thead>
+<tbody class="divide-y">@forelse($transfers as $t)<tr><td class="px-6 py-3 text-sm">{{ $t->transfer_number }}</td><td class="px-6 py-3 text-sm">{{ $t->fromBranch?->name }} → {{ $t->toBranch?->name }}</td><td class="px-6 py-3 text-sm">{{ $t->status }}</td><td class="px-6 py-3 text-right text-sm"><a href="{{ route('admin.transfers.show', $t) }}" class="underline">View</a></td></tr>@empty<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No transfers</td></tr>@endforelse</tbody></table>
+@if($transfers->hasPages())<div class="p-4 border-t">{{ $transfers->links() }}</div>@endif</div></div>
+</x-layouts.admin>
