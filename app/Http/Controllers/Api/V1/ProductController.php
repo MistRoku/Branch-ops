@@ -54,6 +54,11 @@ class ProductController extends Controller
         }
         
         $products = $query->paginate($request->get('per_page', 20));
+
+        // Staff must not see cost prices (margin protection)
+        if (!$user->canSeeCostPrices()) {
+            $products->getCollection()->each(fn($p) => $p->makeHidden('cost_price'));
+        }
         
         return response()->json([
             'success' => true,
@@ -76,6 +81,14 @@ class ProductController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Only super admins can create products via API
+        if (!Auth::user()->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only super admins can create products',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'supplier_id' => 'nullable|exists:suppliers,id',
             'name' => 'required|string|max:255',
@@ -121,13 +134,17 @@ class ProductController extends Controller
     {
         $product = Product::with(['supplier', 'stockLevels.branch', 'documents'])->findOrFail($id);
         
-        // Check authorization
+        // Check authorization - must stock in caller's branch
         $user = Auth::user();
-        if (!$user->isSuperAdmin() && !$user->canAccessBranch($product->stockLevels->first()?->branch_id)) {
+        if (!$user->isSuperAdmin() && !$product->stockLevels->contains('branch_id', $user->branch_id)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access to this product',
             ], 403);
+        }
+
+        if (!$user->canSeeCostPrices()) {
+            $product->makeHidden('cost_price');
         }
 
         return response()->json([
@@ -150,7 +167,7 @@ class ProductController extends Controller
         // Check authorization
         $user = Auth::user();
         if (!$user->isSuperAdmin() && !$user->canSeeCostPrices()) {
-            unset($request['cost_price']);
+            $request->request->remove('cost_price');
         }
 
         $validated = $request->validate([
