@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\TransferController;
+use App\Http\Controllers\Admin\StockTakeController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -94,11 +95,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('stock-takes')->name('admin.stock-takes.')->group(function () {
-        // Route::get('/', [StockTakeController::class, 'index'])->name('index');
-        // Route::get('/create', [StockTakeController::class, 'create'])->name('create');
-        // Route::post('/', [StockTakeController::class, 'store'])->name('store');
-        // Route::get('/{id}', [StockTakeController::class, 'show'])->name('show');
-        // Route::put('/{id}', [StockTakeController::class, 'update'])->name('update');
+        Route::get('/', [StockTakeController::class, 'index'])->name('index');
+        Route::get('/create', [StockTakeController::class, 'create'])->name('create');
+        Route::post('/', [StockTakeController::class, 'store'])->name('store');
+        Route::get('/{id}', [StockTakeController::class, 'show'])->name('show');
+        Route::put('/{id}', [StockTakeController::class, 'update'])->name('update');
     });
     
     /*

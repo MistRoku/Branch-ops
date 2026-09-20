@@ -1,0 +1,5 @@
+<x-layouts.admin title="Stock Takes">
+<div class="space-y-4"><div class="flex justify-between border-b pb-4"><h1 class="text-2xl font-semibold">Stock Takes</h1><a href="{{ route('admin.stock-takes.create') }}" class="px-4 py-2 bg-gray-900 text-white text-sm">New Count</a></div>
+<div class="bg-white border"><table class="min-w-full divide-y"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs uppercase">ID</th><th class="px-6 py-3 text-left text-xs uppercase">Branch</th><th class="px-6 py-3 text-left text-xs uppercase">Status</th><th class="px-6 py-3 text-right text-xs uppercase">Actions</th></tr></thead>
+<tbody class="divide-y">@forelse($takes as $t)<tr><td class="px-6 py-3 text-sm">#{{ $t->id }}</td><td class="px-6 py-3 text-sm">{{ $t->branch?->name }}</td><td class="px-6 py-3 text-sm">{{ $t->status }}</td><td class="px-6 py-3 text-right text-sm"><a href="{{ route('admin.stock-takes.show', $t) }}" class="underline">View</a></td></tr>@empty<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No stock takes</td></tr>@endforelse</tbody></table></div></div>
+</x-layouts.admin>
