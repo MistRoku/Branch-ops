@@ -208,6 +208,7 @@ body {
 }
 
 /* Screen-reader-only text */
+.sr-only {
     position: absolute;
     width: 1px;
     height: 1px;
