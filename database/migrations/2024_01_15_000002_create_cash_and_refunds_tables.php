@@ -82,36 +82,14 @@ return new class extends Migration
             $table->index('status');
         });
 
-        // Update products table with recall and branch tracking
-        Schema::table('products', function (Blueprint $table) {
-            $table->foreignId('branch_id')->nullable()->after('id')->constrained()->nullOnDelete();
-            $table->string('barcode_type')->nullable()->after('barcode');
-            $table->renameColumn('selling_price', 'price');
-            $table->integer('stock_quantity')->default(0)->after('tax_rate');
-            $table->integer('low_stock_threshold')->default(5)->after('stock_quantity');
-            $table->enum('product_type', ['physical', 'digital', 'service'])->default('physical')->after('low_stock_threshold');
-            $table->boolean('is_recalled')->default(false)->after('product_type');
-            $table->text('recall_reason')->nullable()->after('is_recalled');
-            $table->timestamp('recalled_at')->nullable()->after('recall_reason');
-            $table->string('recall_batch')->nullable()->after('recalled_at');
-            $table->json('metadata')->nullable()->after('recall_batch');
-            $table->dropColumn(['unit_of_measure', 'reorder_level', 'is_active', 'attributes']);
-        });
+        // NOTE: products table alterations removed — the app code uses
+        // selling_price, reorder_level, is_active and attributes columns.
 
-        // Update sales table with enhanced tracking
-        Schema::table('sales', function (Blueprint $table) {
-            $table->foreignId('customer_id')->nullable()->after('user_id')->constrained('users')->nullOnDelete();
-            $table->string('authorization_code')->nullable()->after('card_last_four');
-            $table->enum('status', ['completed', 'voided', 'refunded_full', 'refunded_partial', 'recalled'])->default('completed')->after('payment_method');
-            $table->text('void_reason')->nullable()->after('status');
-            $table->foreignId('voided_by')->nullable()->after('void_reason')->constrained('users')->nullOnDelete();
-            $table->timestamp('voided_at')->nullable()->after('voided_by');
-            $table->text('recall_reason')->nullable()->after('voided_at');
-            $table->foreignId('recalled_by')->nullable()->after('recall_reason')->constrained('users')->nullOnDelete();
-            $table->timestamp('recalled_at')->nullable()->after('recalled_by');
-            $table->foreignId('cash_drawer_id')->nullable()->after('recalled_at')->constrained('cash_drawers')->nullOnDelete();
-            $table->json('metadata')->nullable()->after('cash_drawer_id');
-        });
+        // NOTE (sales): alterations removed, see above.
+
+        // NOTE: products/sales alterations removed — the app code uses
+        // selling_price, reorder_level, is_active and attributes columns.
+        // This migration only owns the cash/refund tables.
     }
 
     /**
