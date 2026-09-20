@@ -17,7 +17,7 @@
 
     @stack('styles')
 </head>
-<body class="bg-gray-50 text-slate-900 h-screen overflow-hidden" x-data="posLayout()">
+<body class="bg-gray-50 text-slate-900 h-screen overflow-hidden" x-data="connectionStatus">
     <div class="h-full flex flex-col">
         <!-- Header Bar (No Sidebar) -->
         <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
@@ -86,28 +86,6 @@
             <span x-text="connectionStatus"></span>
         </div>
     </div>
-
-    <script>
-        function posLayout() {
-            return {
-                connectionStatus: 'Connecting...',
-                init() {
-                    // Monitor WebSocket connection status
-                    if (window.Echo) {
-                        window.Echo.connector.pusher.connection.bind('connected', () => {
-                            this.connectionStatus = 'Connected';
-                        });
-                        window.Echo.connector.pusher.connection.bind('disconnected', () => {
-                            this.connectionStatus = 'Disconnected';
-                        });
-                        window.Echo.connector.pusher.connection.bind('connecting', () => {
-                            this.connectionStatus = 'Connecting...';
-                        });
-                    }
-                }
-            }
-        }
-    </script>
 
     @stack('scripts')
 </body>

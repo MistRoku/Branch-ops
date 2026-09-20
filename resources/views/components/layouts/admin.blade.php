@@ -17,7 +17,7 @@
 
     @stack('styles')
 </head>
-<body class="bg-brand-50 text-brand-900" x-data="layoutData()">
+<body class="bg-brand-50 text-brand-900" x-data="connectionStatus">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="min-h-screen flex">
         <!-- Sidebar -->
@@ -173,26 +173,6 @@
             </div>
         </main>
     </div>
-
-    <script>
-        function layoutData() {
-            return {
-                connectionStatus: 'Connecting...',
-                init() {
-                    this.checkConnection();
-                    window.Echo?.connector?.pusher?.connection.bind('connected', () => {
-                        this.connectionStatus = 'Connected';
-                    });
-                    window.Echo?.connector?.pusher?.connection.bind('disconnected', () => {
-                        this.connectionStatus = 'Disconnected';
-                    });
-                },
-                checkConnection() {
-                    // Connection status will be updated by Echo events
-                }
-            }
-        }
-    </script>
 
     @stack('scripts')
 </body>

@@ -97,17 +97,24 @@
                 <span class="text-xs text-brand-500">Last 14 days</span>
             </div>
             <div class="h-64">
-                <canvas id="revenueChart"></canvas>
+                <canvas x-data="revenueChart"
+                        data-labels="@json($revenueLabels ?? [])"
+                        data-values="@json($revenueValues ?? [])"
+                        role="img"
+                        aria-label="Revenue over the last 14 days"></canvas>
             </div>
         </x-ui.card>
 
         <!-- Recent Activity Feed -->
         <x-ui.card>
             <h2 class="text-lg font-semibold mb-4">Live Activity Feed</h2>
-            <div class="space-y-3" x-data="activityFeed()">
+            <div class="space-y-3" x-data="activityFeed({ activities: @json($activities ?? []), branchId: {{ $branchId ?? 'null' }} })">
+                <p x-show="activities.length === 0" class="text-center py-8 text-brand-500 text-sm">
+                    No recent activity
+                </p>
                 <template x-for="activity in activities" :key="activity.id">
                     <div class="flex items-start space-x-3 py-2 border-b border-brand-100 last:border-0">
-                        <div class="w-2 h-2 mt-1.5 rounded-none" 
+                        <div class="w-2 h-2 mt-1.5" aria-hidden="true"
                              :class="{
                                  'bg-success': activity.type === 'sale',
                                  'bg-warning': activity.type === 'stock',
@@ -121,12 +128,6 @@
                         </div>
                     </div>
                 </template>
-                
-                @if(empty($activities))
-                    <div class="text-center py-8 text-brand-500 text-sm">
-                        No recent activity
-                    </div>
-                @endif
             </div>
         </x-ui.card>
     </div>
@@ -162,51 +163,4 @@
         </x-ui.table>
     </x-ui.card>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-const revenueCtx = document.getElementById('revenueChart');
-if (revenueCtx && window.Chart) {
-    new Chart(revenueCtx, {
-        type: 'line',
-        data: {
-            labels: @json($revenueLabels ?? []),
-            datasets: [{
-                label: 'Revenue (R)',
-                data: @json($revenueValues ?? []),
-                fill: true,
-                tension: 0.3,
-            }],
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } },
-    });
-}
-function activityFeed() {
-    return {
-        activities: @json($activities ?? []),
-        init() {
-            // Listen for real-time events
-            window.Echo?.channel('dashboard')
-                ?.listen('SaleRecorded', (e) => {
-                    this.activities.unshift({
-                        id: Date.now(),
-                        type: 'sale',
-                        message: `New sale: $${e.sale.total} at ${e.branch}`,
-                        time: 'Just now'
-                    });
-                    this.activities = this.activities.slice(0, 10);
-                })
-                ?.listen('StockLowAlert', (e) => {
-                    this.activities.unshift({
-                        id: Date.now(),
-                        type: 'alert',
-                        message: `Low stock: ${e.product.name} (${e.currentStock} remaining)`,
-                        time: 'Just now'
-                    });
-                    this.activities = this.activities.slice(0, 10);
-                });
-        }
-    }
-}
-</script>
 @endsection
