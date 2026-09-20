@@ -87,14 +87,20 @@ class SearchController extends Controller
      */
     protected function searchProducts(string $query, int $limit, $user): array
     {
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $query);
         $queryBuilder = \App\Models\Product::with(['supplier', 'stockLevels'])
+            ->withSum('stockLevels as total_stock_sum', 'quantity')
             ->where('is_active', true)
-            ->where(function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('sku', 'like', "%{$query}%")
-                  ->orWhere('barcode', 'like', "%{$query}%")
-                  ->orWhere('description', 'like', "%{$query}%");
-            });
+            ->where(function ($q) use ($escaped) {
+                $q->where('name', 'like', "%{$escaped}%")
+                  ->orWhere('sku', 'like', "%{$escaped}%")
+                  ->orWhere('barcode', 'like', "%{$escaped}%")
+                  ->orWhere('description', 'like', "%{$escaped}%");
+            })
+            ->orderByRaw(
+                "CASE WHEN name LIKE ? THEN 0 WHEN sku LIKE ? THEN 1 WHEN barcode LIKE ? THEN 2 ELSE 3 END",
+                ["{$escaped}%", "{$escaped}%", "{$escaped}%"]
+            );
 
         // Branch scoping
         if (!$user->isSuperAdmin()) {
@@ -111,7 +117,7 @@ class SearchController extends Controller
             'url' => route('admin.products.show', $product),
             'meta' => [
                 'price' => $product->selling_price,
-                'stock' => $product->totalStock,
+                'stock' => $product->total_stock_sum ?? $product->totalStock,
                 'supplier' => $product->supplier?->name,
             ],
         ])->toArray();
@@ -127,13 +133,15 @@ class SearchController extends Controller
      */
     protected function searchSuppliers(string $query, int $limit, $user): array
     {
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $query);
         $queryBuilder = \App\Models\Supplier::with(['products', 'purchaseOrders'])
+            ->withCount(['products', 'purchaseOrders'])
             ->where('is_active', true)
-            ->where(function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('contact_person', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%")
-                  ->orWhere('phone', 'like', "%{$query}%");
+            ->where(function ($q) use ($escaped) {
+                $q->where('name', 'like', "%{$escaped}%")
+                  ->orWhere('contact_person', 'like', "%{$escaped}%")
+                  ->orWhere('email', 'like', "%{$escaped}%")
+                  ->orWhere('phone', 'like', "%{$escaped}%");
             });
 
         return $queryBuilder->limit($limit)->get()->map(fn($supplier) => [
