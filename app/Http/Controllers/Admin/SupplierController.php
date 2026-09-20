@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 /**
  * Supplier Controller - Admin UI for supplier management
@@ -20,7 +20,7 @@ class SupplierController extends Controller
 
         if ($request->filled('search')) {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $request->search);
-            $query->where(fn($q) => $q->where('name', 'like', "%{$escaped}%")
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$escaped}%")
                 ->orWhere('email', 'like', "%{$escaped}%")
                 ->orWhere('phone', 'like', "%{$escaped}%"));
         }
@@ -37,6 +37,7 @@ class SupplierController extends Controller
     public function create(): View
     {
         $this->authorizeManager();
+
         return view('admin.suppliers.create');
     }
 
@@ -99,7 +100,7 @@ class SupplierController extends Controller
     public function destroy(int $id): RedirectResponse
     {
         $user = Auth::user();
-        if (!$user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin()) {
             abort(403, 'Only super admins can delete suppliers');
         }
 
@@ -117,7 +118,7 @@ class SupplierController extends Controller
     protected function authorizeManager(): void
     {
         $user = Auth::user();
-        if (!$user->isSuperAdmin() && !$user->isBranchManager()) {
+        if (! $user->isSuperAdmin() && ! $user->isBranchManager()) {
             abort(403, 'Unauthorized to manage suppliers');
         }
     }

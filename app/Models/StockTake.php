@@ -29,8 +29,11 @@ class StockTake extends Model
     ];
 
     const STATUS_SCHEDULED = 'scheduled';
+
     const STATUS_IN_PROGRESS = 'in_progress';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_CANCELLED = 'cancelled';
 
     public function branch(): BelongsTo
@@ -82,7 +85,7 @@ class StockTake extends Model
     {
         $date = now()->format('Ymd');
         $dailyCount = static::whereDate('created_at', today())->count() + 1;
-        
+
         return sprintf('STK-%s-%05d', $date, $dailyCount);
     }
 
@@ -93,6 +96,6 @@ class StockTake extends Model
 
     public function getItemsWithVarianceAttribute(): int
     {
-        return $this->items->filter(fn($item) => $item->variance !== 0)->count();
+        return $this->items->filter(fn ($item) => $item->variance !== 0)->count();
     }
 }

@@ -16,6 +16,7 @@ class SearchController extends Controller
             $response = $api->index(Request::create('/api/search', 'GET', $request->only('q')));
             $grouped = $response->getData(true)['data']['results'] ?? [];
         }
+
         return view('search.index', compact('grouped'));
     }
 }

@@ -16,6 +16,6 @@ class SaleRecorded implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        return [new Channel('dashboard' . ($this->branchId ? ".{$this->branchId}" : ''))];
+        return [new Channel('dashboard'.($this->branchId ? ".{$this->branchId}" : ''))];
     }
 }

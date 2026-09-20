@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->text('error_message')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'created_at']);
             $table->index('type');
             $table->index('status');

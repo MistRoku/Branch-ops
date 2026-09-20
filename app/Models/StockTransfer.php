@@ -33,10 +33,15 @@ class StockTransfer extends Model
     ];
 
     const STATUS_DRAFT = 'draft';
+
     const STATUS_PENDING_APPROVAL = 'pending_approval';
+
     const STATUS_APPROVED = 'approved';
+
     const STATUS_IN_TRANSIT = 'in_transit';
+
     const STATUS_RECEIVED = 'received';
+
     const STATUS_REJECTED = 'rejected';
 
     public function fromBranch(): BelongsTo
@@ -118,7 +123,7 @@ class StockTransfer extends Model
     {
         $date = now()->format('Ymd');
         $dailyCount = static::whereDate('created_at', today())->count() + 1;
-        
+
         return sprintf('TRF-%s-%05d', $date, $dailyCount);
     }
 }

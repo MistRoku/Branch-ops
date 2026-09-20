@@ -33,7 +33,9 @@ class ReportSchedule extends Model
     ];
 
     const FREQUENCY_DAILY = 'daily';
+
     const FREQUENCY_WEEKLY = 'weekly';
+
     const FREQUENCY_MONTHLY = 'monthly';
 
     public function branch(): BelongsTo
@@ -73,7 +75,7 @@ class ReportSchedule extends Model
 
     public function shouldRunToday(): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -89,7 +91,7 @@ class ReportSchedule extends Model
 
     public function getNextRunAttribute(): ?string
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return null;
         }
 

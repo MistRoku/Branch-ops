@@ -29,6 +29,7 @@ class TransferService
                     'quantity_received' => 0,
                 ]);
             }
+
             return $transfer->fresh('items');
         });
     }
@@ -37,6 +38,7 @@ class TransferService
     {
         abort_unless($transfer->canBeApproved(), 422, 'Transfer cannot be approved');
         $transfer->update(['status' => StockTransfer::STATUS_APPROVED, 'approved_by' => Auth::id(), 'approved_at' => now()]);
+
         return $transfer->fresh();
     }
 
@@ -50,6 +52,7 @@ class TransferService
             }
             $transfer->update(['status' => StockTransfer::STATUS_RECEIVED, 'received_by' => Auth::id(), 'received_at' => now()]);
         });
+
         return $transfer->fresh('items');
     }
 
@@ -57,6 +60,7 @@ class TransferService
     {
         abort_unless($transfer->canBeRejected(), 422, 'Transfer cannot be rejected');
         $transfer->update(['status' => StockTransfer::STATUS_REJECTED, 'rejected_at' => now(), 'rejection_reason' => $reason]);
+
         return $transfer->fresh();
     }
 }

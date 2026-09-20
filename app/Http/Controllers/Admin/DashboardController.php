@@ -3,21 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\StockLevel;
+use App\Models\StockTransfer;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 /**
  * Admin Dashboard Controller - Web interface for admin dashboard
- * 
+ *
  * Serves the main admin dashboard view with KPIs and activity feed.
  */
 class DashboardController extends Controller
 {
     /**
      * Display the admin dashboard
-     * 
-     * @param Request $request The HTTP request
+     *
+     * @param  Request  $request  The HTTP request
      * @return View The dashboard view
      */
     public function index(Request $request): View
@@ -28,18 +33,18 @@ class DashboardController extends Controller
         // Determine branch scope
         if ($request->has('branch_id') && $user->isSuperAdmin()) {
             $branchId = $request->branch_id ?: null;
-        } elseif (!$user->isSuperAdmin()) {
+        } elseif (! $user->isSuperAdmin()) {
             $branchId = $user->branch_id;
         }
 
-        $todaySales = \App\Models\Sale::where('status', 'completed')
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+        $todaySales = Sale::where('status', 'completed')
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', today())
             ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
             ->first();
 
-        $yesterdaySales = \App\Models\Sale::where('status', 'completed')
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+        $yesterdaySales = Sale::where('status', 'completed')
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', today()->subDay())
             ->selectRaw('COALESCE(SUM(total), 0) as total, COUNT(*) as count')
             ->first();
@@ -52,22 +57,22 @@ class DashboardController extends Controller
             ? round((($todaySales->count - $yesterdaySales->count) / $yesterdaySales->count) * 100, 1)
             : ($todaySales->count > 0 ? 100 : 0);
 
-        $monthlyRevenue = \App\Models\Sale::where('status', 'completed')
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+        $monthlyRevenue = Sale::where('status', 'completed')
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->sum('total');
 
-        $lowStockItems = \App\Models\StockLevel::with(['product', 'branch'])
+        $lowStockItems = StockLevel::with(['product', 'branch'])
             ->join('products', 'products.id', '=', 'stock_levels.product_id')
             ->where('products.is_active', true)
             ->whereColumn('stock_levels.quantity', '<=', 'products.reorder_level')
             ->select('stock_levels.*')
-            ->when($branchId, fn($q) => $q->where('stock_levels.branch_id', $branchId))
+            ->when($branchId, fn ($q) => $q->where('stock_levels.branch_id', $branchId))
             ->orderBy('stock_levels.quantity')
             ->limit(10)
             ->get()
-            ->map(fn($sl) => [
+            ->map(fn ($sl) => [
                 'product_name' => $sl->product->name,
                 'sku' => $sl->product->sku,
                 'branch' => $sl->branch->name,
@@ -75,19 +80,19 @@ class DashboardController extends Controller
                 'min_level' => $sl->product->reorder_level,
             ]);
 
-        $lowStockCount = \App\Models\StockLevel::join('products', 'products.id', '=', 'stock_levels.product_id')
+        $lowStockCount = StockLevel::join('products', 'products.id', '=', 'stock_levels.product_id')
             ->whereColumn('stock_levels.quantity', '<=', 'products.reorder_level')
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->count();
 
-        $activeTransfers = \App\Models\StockTransfer::whereIn('status', ['pending', 'approved', 'in_transit'])
-            ->when($branchId, fn($q) => $q->where('from_branch_id', $branchId)->orWhere('to_branch_id', $branchId))
+        $activeTransfers = StockTransfer::whereIn('status', ['pending', 'approved', 'in_transit'])
+            ->when($branchId, fn ($q) => $q->where('from_branch_id', $branchId)->orWhere('to_branch_id', $branchId))
             ->count();
 
-        $totalProducts = \App\Models\Product::where('is_active', true)->count();
+        $totalProducts = Product::where('is_active', true)->count();
 
-        $revenueChart = \App\Models\Sale::where('status', 'completed')
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+        $revenueChart = Sale::where('status', 'completed')
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', '>=', now()->subDays(13))
             ->selectRaw('DATE(created_at) as date, COALESCE(SUM(total), 0) as total')
             ->groupBy('date')
@@ -103,21 +108,21 @@ class DashboardController extends Controller
             $values[] = (float) ($revenueChart[$day] ?? 0);
         }
 
-        $activities = \App\Models\Sale::with(['user', 'branch'])
+        $activities = Sale::with(['user', 'branch'])
             ->where('status', 'completed')
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(fn($sale) => [
+            ->map(fn ($sale) => [
                 'id' => "sale_{$sale->id}",
                 'type' => 'sale',
-                'message' => "Sale #{$sale->id} — R " . number_format($sale->total, 2),
+                'message' => "Sale #{$sale->id} — R ".number_format($sale->total, 2),
                 'time' => $sale->created_at->diffForHumans(),
             ]);
 
         $branches = $user->isSuperAdmin()
-            ? \App\Models\Branch::where('is_active', true)->orderBy('name')->get(['id', 'name'])
+            ? Branch::where('is_active', true)->orderBy('name')->get(['id', 'name'])
             : collect();
 
         return view('admin.dashboard', [
@@ -126,9 +131,9 @@ class DashboardController extends Controller
             'branches' => $branches,
             'kpi' => [
                 'today_sales' => (float) $todaySales->total,
-                'sales_change' => ($salesChange >= 0 ? '+' : '') . $salesChange,
+                'sales_change' => ($salesChange >= 0 ? '+' : '').$salesChange,
                 'orders_count' => $todaySales->count,
-                'orders_change' => ($ordersChange >= 0 ? '+' : '') . $ordersChange,
+                'orders_change' => ($ordersChange >= 0 ? '+' : '').$ordersChange,
                 'low_stock' => $lowStockCount,
                 'active_transfers' => $activeTransfers,
                 'monthly_revenue' => (float) $monthlyRevenue,

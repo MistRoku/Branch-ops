@@ -2,17 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\CashDrawer;
 use App\Models\CashMovement;
-use App\Models\User;
-use App\Models\AuditLog;
 use App\Models\Notification;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 /**
  * CashService handles all cash drawer operations.
- * 
+ *
  * Every cash movement requires proper authorization and creates audit trails.
  * Supports drawer open/close, payouts, payins, transfers, and adjustments.
  */
@@ -31,9 +31,9 @@ class CashService
         return DB::transaction(function () use ($user, $initialBalance) {
             // Check user doesn't already have open drawer
             $existingOpen = CashDrawer::where('opened_by', $user->id)
-                                      ->where('status', CashDrawer::STATUS_OPEN)
-                                      ->first();
-            
+                ->where('status', CashDrawer::STATUS_OPEN)
+                ->first();
+
             if ($existingOpen) {
                 throw new Exception('You already have an open cash drawer');
             }
@@ -41,7 +41,7 @@ class CashService
             $drawer = CashDrawer::create([
                 'branch_id' => $user->branch_id,
                 'name' => "Drawer - {$user->name}",
-                'identifier' => 'DRAWER-' . strtoupper($user->username) . '-' . now()->format('Ymd'),
+                'identifier' => 'DRAWER-'.strtoupper($user->username).'-'.now()->format('Ymd'),
                 'status' => CashDrawer::STATUS_OPEN,
                 'opening_balance' => $initialBalance,
                 'opened_by' => $user->id,
@@ -128,14 +128,14 @@ class CashService
                 throw new Exception('Drawer must be open for payouts');
             }
 
-            if (!$drawer->canAcceptTransactions()) {
+            if (! $drawer->canAcceptTransactions()) {
                 throw new Exception('This drawer cannot accept transactions');
             }
 
             // Check authorization for large payouts
             $requiresAuth = $amount >= self::PAYOUT_THRESHOLD;
-            if ($requiresAuth && !$this->validateAuthorization($authorizationCode, $user->branch)) {
-                throw new Exception("Manager authorization required for payouts over $" . self::PAYOUT_THRESHOLD);
+            if ($requiresAuth && ! $this->validateAuthorization($authorizationCode, $user->branch)) {
+                throw new Exception('Manager authorization required for payouts over $'.self::PAYOUT_THRESHOLD);
             }
 
             $movement = CashMovement::create([
@@ -199,7 +199,7 @@ class CashService
     {
         return DB::transaction(function () use ($fromDrawer, $toDrawer, $user, $amount, $reason, $authorizationCode) {
             // Transfers always require authorization
-            if (!$this->validateAuthorization($authorizationCode, $user->branch)) {
+            if (! $this->validateAuthorization($authorizationCode, $user->branch)) {
                 throw new Exception('Manager authorization required for cash transfers');
             }
 
@@ -246,7 +246,7 @@ class CashService
     {
         return DB::transaction(function () use ($drawer, $user, $amount, $reason, $authorizationCode) {
             // Adjustments always require authorization
-            if (!$this->validateAuthorization($authorizationCode, $user->branch)) {
+            if (! $this->validateAuthorization($authorizationCode, $user->branch)) {
                 throw new Exception('Manager authorization required for balance adjustments');
             }
 
@@ -280,9 +280,9 @@ class CashService
     public function getOpenDrawers(int $branchId)
     {
         return CashDrawer::where('branch_id', $branchId)
-                        ->where('status', CashDrawer::STATUS_OPEN)
-                        ->with(['openedBy'])
-                        ->get();
+            ->where('status', CashDrawer::STATUS_OPEN)
+            ->with(['openedBy'])
+            ->get();
     }
 
     /**
@@ -295,6 +295,7 @@ class CashService
         }
 
         $manager = $this->getAuthorizingManager($code);
+
         return $manager !== null && $manager->branch_id === $branch->id;
     }
 
@@ -308,7 +309,7 @@ class CashService
         }
 
         return User::where('role', 'manager')
-                   ->where('authorization_code', $code)
-                   ->first();
+            ->where('authorization_code', $code)
+            ->first();
     }
 }

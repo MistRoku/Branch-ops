@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * SaleRefund model for tracking full and partial refunds.
- * 
+ *
  * Every refund requires an authorization code and creates an audit trail.
  * Supports item-level refunds for partial returns.
  */
@@ -21,15 +21,20 @@ class SaleRefund extends Model
      * Refund type constants.
      */
     const TYPE_FULL = 'full';
+
     const TYPE_PARTIAL = 'partial';
+
     const TYPE_ITEM = 'item';
 
     /**
      * Refund status constants.
      */
     const STATUS_PENDING = 'pending';
+
     const STATUS_APPROVED = 'approved';
+
     const STATUS_REJECTED = 'rejected';
+
     const STATUS_COMPLETED = 'completed';
 
     protected $fillable = [

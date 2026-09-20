@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * CashMovement model for tracking individual cash drawer transactions.
- * 
+ *
  * Every movement (payout, payin, transfer) requires authorization
  * and creates an immutable audit trail.
  */
@@ -21,10 +21,15 @@ class CashMovement extends Model
      * Movement types.
      */
     const TYPE_OPEN = 'open';
+
     const TYPE_CLOSE = 'close';
+
     const TYPE_PAYOUT = 'payout';
+
     const TYPE_PAYIN = 'payin';
+
     const TYPE_TRANSFER = 'transfer';
+
     const TYPE_ADJUSTMENT = 'adjustment';
 
     protected $fillable = [

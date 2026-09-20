@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\DatabaseNotification;
 
 /**
  * Enhanced Notification model with interactive actions and deep linking.
- * 
+ *
  * Notifications can link to specific resources (low stock items, pending approvals)
  * and support direct action buttons for quick responses.
  */
@@ -41,22 +41,34 @@ class Notification extends DatabaseNotification
      * Notification type constants.
      */
     const TYPE_LOW_STOCK = 'low_stock';
+
     const TYPE_TRANSFER_PENDING = 'transfer_pending';
+
     const TYPE_TRANSFER_APPROVED = 'transfer_approved';
+
     const TYPE_TRANSFER_RECEIVED = 'transfer_received';
+
     const TYPE_PO_RECEIVED = 'po_received';
+
     const TYPE_REPORT_COMPLETED = 'report_completed';
+
     const TYPE_REFUND_PENDING = 'refund_pending';
+
     const TYPE_CASH_VARIANCE = 'cash_variance';
+
     const TYPE_PRODUCT_RECALL = 'product_recall';
+
     const TYPE_AUTH_REQUIRED = 'auth_required';
 
     /**
      * Priority levels for notifications.
      */
     const PRIORITY_LOW = 'low';
+
     const PRIORITY_NORMAL = 'normal';
+
     const PRIORITY_HIGH = 'high';
+
     const PRIORITY_URGENT = 'urgent';
 
     /**
@@ -113,7 +125,7 @@ class Notification extends DatabaseNotification
     public function scopeRequiresAction($query)
     {
         return $query->whereNotNull('action_url')
-                     ->whereNull('read_at');
+            ->whereNull('read_at');
     }
 
     /**
@@ -194,11 +206,11 @@ class Notification extends DatabaseNotification
         }
 
         if ($diff->h > 0) {
-            return $diff->h . 'h ago';
+            return $diff->h.'h ago';
         }
 
         if ($diff->i > 0) {
-            return $diff->i . 'm ago';
+            return $diff->i.'m ago';
         }
 
         return 'Just now';

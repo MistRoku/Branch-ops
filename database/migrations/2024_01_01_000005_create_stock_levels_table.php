@@ -16,7 +16,7 @@ return new class extends Migration
             $table->decimal('valuation', 12, 2)->default(0); // current stock value at cost
             $table->timestamp('last_counted_at')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['product_id', 'branch_id']);
             $table->index(['branch_id', 'quantity']);
         });

@@ -17,16 +17,17 @@ class PurchaseOrderService
                 'branch_id' => $data['branch_id'],
                 'supplier_id' => $data['supplier_id'],
                 'user_id' => Auth::id(),
-                'po_number' => 'PO-' . now()->format('Ymd') . '-' . str_pad((string) (PurchaseOrder::whereDate('created_at', today())->count() + 1), 5, '0', STR_PAD_LEFT),
+                'po_number' => 'PO-'.now()->format('Ymd').'-'.str_pad((string) (PurchaseOrder::whereDate('created_at', today())->count() + 1), 5, '0', STR_PAD_LEFT),
                 'status' => 'draft',
                 'expected_delivery_date' => $data['expected_delivery_date'] ?? null,
-                'subtotal' => collect($data['items'])->sum(fn($i) => $i['quantity'] * $i['unit_cost']),
-                'total_amount' => collect($data['items'])->sum(fn($i) => $i['quantity'] * $i['unit_cost']),
+                'subtotal' => collect($data['items'])->sum(fn ($i) => $i['quantity'] * $i['unit_cost']),
+                'total_amount' => collect($data['items'])->sum(fn ($i) => $i['quantity'] * $i['unit_cost']),
                 'notes' => $data['notes'] ?? null,
             ]);
             foreach ($data['items'] as $item) {
                 $po->items()->create(['product_id' => $item['product_id'], 'quantity_ordered' => $item['quantity'], 'quantity_received' => 0, 'unit_cost' => $item['unit_cost']]);
             }
+
             return $po;
         });
     }
@@ -35,6 +36,7 @@ class PurchaseOrderService
     {
         abort_unless($po->status === 'draft', 422, 'Only drafts can be sent');
         $po->update(['status' => 'sent']);
+
         return $po->fresh();
     }
 
@@ -51,9 +53,10 @@ class PurchaseOrderService
                 }
             }
             $po->refresh();
-            $complete = $po->items->every(fn($i) => $i->quantity_received >= $i->quantity_ordered);
+            $complete = $po->items->every(fn ($i) => $i->quantity_received >= $i->quantity_ordered);
             $po->update(['status' => $complete ? 'completed' : 'partial_received', 'received_at' => $complete ? now() : null]);
         });
+
         return $po->fresh('items');
     }
 
@@ -61,6 +64,7 @@ class PurchaseOrderService
     {
         abort_unless(in_array($po->status, ['draft', 'sent']), 422, 'PO cannot be cancelled');
         $po->update(['status' => 'cancelled']);
+
         return $po->fresh();
     }
 }

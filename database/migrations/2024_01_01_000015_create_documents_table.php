@@ -22,7 +22,7 @@ return new class extends Migration
             $table->enum('type', ['image', 'spec_sheet', 'invoice', 'delivery_note', 'stock_take_report', 'other']);
             $table->text('description')->nullable();
             $table->timestamps();
-            
+
             $table->index(['entity_type', 'entity_id']);
             $table->index('type');
         });

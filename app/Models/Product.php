@@ -11,7 +11,7 @@ use Laravel\Scout\Searchable;
 
 /**
  * Product model with barcode support and recall tracking.
- * 
+ *
  * Supports barcode scanning, card data placeholders, and product recalls.
  */
 class Product extends Model
@@ -22,7 +22,9 @@ class Product extends Model
      * Product type constants.
      */
     const TYPE_PHYSICAL = 'physical';
+
     const TYPE_DIGITAL = 'digital';
+
     const TYPE_SERVICE = 'service';
 
     protected $fillable = [
@@ -126,7 +128,7 @@ class Product extends Model
      */
     public function isAvailable(): bool
     {
-        return !$this->is_recalled && $this->stock_quantity > 0;
+        return ! $this->is_recalled && $this->stock_quantity > 0;
     }
 
     /**

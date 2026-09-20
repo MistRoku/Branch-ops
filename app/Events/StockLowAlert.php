@@ -17,6 +17,6 @@ class StockLowAlert implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        return [new Channel('dashboard.' . $this->stockLevel->branch_id)];
+        return [new Channel('dashboard.'.$this->stockLevel->branch_id)];
     }
 }

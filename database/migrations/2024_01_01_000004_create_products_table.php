@@ -23,7 +23,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->json('attributes')->nullable(); // color, size, etc.
             $table->timestamps();
-            
+
             $table->index(['supplier_id', 'is_active']);
             $table->index('sku');
             $table->index('barcode');

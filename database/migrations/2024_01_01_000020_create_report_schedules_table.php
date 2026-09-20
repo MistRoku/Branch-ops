@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_sent_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['branch_id', 'is_active']);
             $table->index('frequency');
         });

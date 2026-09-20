@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -37,7 +37,9 @@ class User extends Authenticatable
     ];
 
     const ROLE_SUPER_ADMIN = 'super_admin';
+
     const ROLE_BRANCH_MANAGER = 'branch_manager';
+
     const ROLE_STAFF = 'staff';
 
     public function branch(): BelongsTo
@@ -137,7 +139,7 @@ class User extends Authenticatable
     public function recordFailedLogin(): void
     {
         $this->increment('failed_login_attempts');
-        
+
         if ($this->failed_login_attempts >= 5) {
             $this->update([
                 'locked_until' => now()->addMinutes(30),

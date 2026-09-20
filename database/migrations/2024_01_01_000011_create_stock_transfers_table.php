@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('rejected_at')->nullable();
             $table->text('rejection_reason')->nullable();
             $table->timestamps();
-            
+
             $table->index(['from_branch_id', 'status']);
             $table->index(['to_branch_id', 'status']);
             $table->index('status');

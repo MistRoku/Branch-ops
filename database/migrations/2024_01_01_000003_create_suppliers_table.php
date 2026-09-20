@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->json('performance_metrics')->nullable(); // avg_delivery_time, quality_score, etc.
             $table->timestamps();
-            
+
             $table->index('is_active');
         });
     }

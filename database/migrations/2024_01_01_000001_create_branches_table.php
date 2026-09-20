@@ -18,7 +18,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->json('settings')->nullable(); // tax, receipt, notification settings
             $table->timestamps();
-            
+
             $table->index('is_active');
         });
     }

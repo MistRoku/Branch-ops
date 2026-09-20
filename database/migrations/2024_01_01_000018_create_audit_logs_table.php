@@ -21,12 +21,12 @@ return new class extends Migration
             $table->string('event_type')->nullable(); // custom event categorization
             $table->text('description')->nullable();
             $table->timestamps(); // created_at is the timestamp of the action
-            
+
             $table->index(['entity_type', 'entity_id', 'created_at']);
             $table->index(['user_id', 'created_at']);
             $table->index('action');
             $table->index('created_at');
-            
+
             // Note: Audit logs are immutable - no updates or deletes allowed via model
         });
     }

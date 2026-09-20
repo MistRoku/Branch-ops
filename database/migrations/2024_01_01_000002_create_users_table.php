@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('locked_until')->nullable();
             $table->rememberToken();
             $table->timestamps();
-            
+
             $table->index(['branch_id', 'role']);
             $table->index('is_active');
             $table->index('email');

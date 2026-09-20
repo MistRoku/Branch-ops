@@ -29,13 +29,21 @@ class AuditLog extends Model
     ];
 
     const ACTION_CREATED = 'created';
+
     const ACTION_UPDATED = 'updated';
+
     const ACTION_DELETED = 'deleted';
+
     const ACTION_RESTORED = 'restored';
+
     const ACTION_LOGIN = 'login';
+
     const ACTION_LOGOUT = 'logout';
+
     const ACTION_FAILED_LOGIN = 'failed_login';
+
     const ACTION_PERMISSION_CHANGED = 'permission_changed';
+
     const ACTION_EXPORTED = 'exported';
 
     // Audit logs are immutable - no updates or deletes allowed
@@ -67,7 +75,7 @@ class AuditLog extends Model
     public function scopeForEntity($query, string $entityType, ?int $entityId = null)
     {
         $query->where('entity_type', $entityType);
-        
+
         if ($entityId !== null) {
             $query->where('entity_id', $entityId);
         }

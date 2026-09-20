@@ -25,12 +25,12 @@ Route::middleware(['guest', 'throttle:10,1'])->group(function () {
 Route::middleware('auth')->group(function () {
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-    
+
     // Default landing page - redirect to POS terminal
     Route::get('/', function () {
         return redirect()->route('pos.terminal');
     })->name('home');
-    
+
     // POS Terminal - Main operational screen (no sidebar)
     Route::get('/pos', function () {
         return view('pos.terminal');

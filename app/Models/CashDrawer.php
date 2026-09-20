@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * CashDrawer model for tracking cash drawer sessions and movements.
- * 
+ *
  * Every cash transaction (open, close, transfer, payout) requires authorization
  * and creates an audit trail. Supports multiple drawers per branch.
  */
@@ -22,17 +22,24 @@ class CashDrawer extends Model
      * Drawer status constants.
      */
     const STATUS_OPEN = 'open';
+
     const STATUS_CLOSED = 'closed';
+
     const STATUS_SUSPENDED = 'suspended';
 
     /**
      * Movement type constants.
      */
     const MOVEMENT_OPEN = 'open';
+
     const MOVEMENT_CLOSE = 'close';
+
     const MOVEMENT_PAYOUT = 'payout';
+
     const MOVEMENT_PAYIN = 'payin';
+
     const MOVEMENT_TRANSFER = 'transfer';
+
     const MOVEMENT_ADJUSTMENT = 'adjustment';
 
     protected $fillable = [
@@ -205,7 +212,7 @@ class CashDrawer extends Model
             'amount' => $countedAmount ?? $expectedBalance,
             'variance' => $variance,
             'user_id' => $userId,
-            'description' => 'Drawer closed' . ($variance != 0 ? " (variance: {$variance})" : ''),
+            'description' => 'Drawer closed'.($variance != 0 ? " (variance: {$variance})" : ''),
             'authorization_code' => $variance != 0 ? 'MANAGER_OVERRIDE' : null,
         ]);
     }

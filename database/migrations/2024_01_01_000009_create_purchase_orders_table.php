@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index(['branch_id', 'status']);
             $table->index(['supplier_id', 'status']);
             $table->index('status');

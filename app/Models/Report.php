@@ -32,13 +32,19 @@ class Report extends Model
     ];
 
     const STATUS_PENDING = 'pending';
+
     const STATUS_PROCESSING = 'processing';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_FAILED = 'failed';
 
     const TYPE_DAILY_SALES = 'daily_sales';
+
     const TYPE_INVENTORY_VALUATION = 'inventory_valuation';
+
     const TYPE_STOCK_MOVEMENT = 'stock_movement';
+
     const TYPE_PURCHASE_ORDER_SUMMARY = 'purchase_order_summary';
 
     public function user(): BelongsTo
@@ -83,7 +89,7 @@ class Report extends Model
 
     public function getDownloadUrlAttribute(): ?string
     {
-        if (!$this->file_path || $this->isExpired()) {
+        if (! $this->file_path || $this->isExpired()) {
             return null;
         }
 
@@ -92,7 +98,7 @@ class Report extends Model
 
     public function getHumanReadableSizeAttribute(): ?string
     {
-        if (!$this->file_size) {
+        if (! $this->file_size) {
             return null;
         }
 
@@ -103,6 +109,6 @@ class Report extends Model
             $bytes /= 1024;
         }
 
-        return round($bytes, 2) . ' ' . $units[$i];
+        return round($bytes, 2).' '.$units[$i];
     }
 }

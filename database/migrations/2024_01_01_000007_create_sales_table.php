@@ -23,7 +23,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamp('completed_at');
             $table->timestamps();
-            
+
             $table->index(['branch_id', 'completed_at']);
             $table->index(['user_id', 'completed_at']);
             $table->index('status');

@@ -34,9 +34,13 @@ class PurchaseOrder extends Model
     ];
 
     const STATUS_DRAFT = 'draft';
+
     const STATUS_SENT = 'sent';
+
     const STATUS_PARTIAL_RECEIVED = 'partial_received';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_CANCELLED = 'cancelled';
 
     public function branch(): BelongsTo
@@ -82,7 +86,7 @@ class PurchaseOrder extends Model
     public function scopeOverdue($query)
     {
         return $query->where('expected_delivery_date', '<', now())
-                     ->whereIn('status', [self::STATUS_SENT, self::STATUS_PARTIAL_RECEIVED]);
+            ->whereIn('status', [self::STATUS_SENT, self::STATUS_PARTIAL_RECEIVED]);
     }
 
     public function isCompleted(): bool
@@ -103,7 +107,7 @@ class PurchaseOrder extends Model
     public function getReceivedPercentageAttribute(): float
     {
         $totalOrdered = $this->items->sum('quantity_ordered');
-        
+
         if ($totalOrdered == 0) {
             return 0;
         }

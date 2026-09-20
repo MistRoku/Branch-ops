@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('quantity_received')->default(0);
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index('stock_transfer_id');
             $table->index('product_id');
         });

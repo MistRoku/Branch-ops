@@ -54,7 +54,7 @@ class SaleItem extends Model
         if ($this->total == 0) {
             return 0;
         }
-        
+
         return ($this->profit / $this->total) * 100;
     }
 }

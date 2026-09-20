@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('entity_id')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'read_at']);
             $table->index('type');
         });

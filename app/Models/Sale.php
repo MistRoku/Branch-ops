@@ -35,7 +35,9 @@ class Sale extends Model
     ];
 
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_REFUNDED = 'refunded';
+
     const STATUS_VOID = 'void';
 
     public function branch(): BelongsTo
@@ -81,16 +83,16 @@ class Sale extends Model
     public function scopeThisMonth($query)
     {
         return $query->whereMonth('completed_at', now()->month)
-                     ->whereYear('completed_at', now()->year);
+            ->whereYear('completed_at', now()->year);
     }
 
     public static function generateInvoiceNumber(int $branchId): string
     {
         $date = now()->format('Ymd');
         $dailyCount = static::whereDate('created_at', today())
-                           ->where('branch_id', $branchId)
-                           ->count() + 1;
-        
+            ->where('branch_id', $branchId)
+            ->count() + 1;
+
         return sprintf('INV-%s-%03d-%05d', $date, $branchId, $dailyCount);
     }
 }

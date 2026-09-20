@@ -1,19 +1,20 @@
 <?php
 
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\InventoryController;
-use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\TransferController;
-use App\Http\Controllers\Admin\StockTakeController;
-use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\AuditLogController;
-use App\Http\Controllers\Admin\NotificationController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\DocumentController;
-use App\Http\Controllers\Admin\SettingsController;
-use App\Http\Controllers\Admin\SearchPageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SearchPageController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\StockTakeController;
+use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
+use App\Http\Controllers\Admin\TransferController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,7 +28,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    
+
     /*
     |--------------------------------------------------------------------------
     | Admin Dashboard
@@ -35,7 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
-    
+
     /*
     |--------------------------------------------------------------------------
     | Product Management Routes
@@ -50,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}', [ProductController::class, 'update'])->name('update');
         Route::delete('/{id}', [ProductController::class, 'destroy'])->name('destroy');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Inventory Management Routes
@@ -65,7 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/product/{productId}/movements', [InventoryController::class, 'productMovements'])
             ->name('product-movements');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Supplier Management Routes (Placeholder)
@@ -80,7 +81,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}', [AdminSupplierController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminSupplierController::class, 'destroy'])->name('destroy');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Transfer Management Routes (Placeholder)
@@ -95,7 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}/reject', [TransferController::class, 'reject'])->name('reject');
         Route::put('/{id}/receive', [TransferController::class, 'receive'])->name('receive');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Stock Take Management Routes (Placeholder)
@@ -108,7 +109,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}', [StockTakeController::class, 'show'])->name('show');
         Route::put('/{id}', [StockTakeController::class, 'update'])->name('update');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Purchase Order Management Routes (Placeholder)
@@ -119,12 +120,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/create', [PurchaseOrderController::class, 'create'])->name('create');
         Route::post('/', [PurchaseOrderController::class, 'store'])->name('store');
         Route::get('/{id}', [PurchaseOrderController::class, 'show'])->name('show');
-        Route::get('/{id}/receive', function (int $id) { $po = \App\Models\PurchaseOrder::with('items.product')->findOrFail($id); return view('admin.purchase-orders.receive', compact('po')); })->name('receive');
+        Route::get('/{id}/receive', function (int $id) {
+            $po = PurchaseOrder::with('items.product')->findOrFail($id);
+
+            return view('admin.purchase-orders.receive', compact('po'));
+        })->name('receive');
         Route::put('/{id}/send', [PurchaseOrderController::class, 'send'])->name('send');
         Route::post('/{id}/receive', [PurchaseOrderController::class, 'receive'])->name('receive.store');
         Route::put('/{id}/cancel', [PurchaseOrderController::class, 'cancel'])->name('cancel');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | User Management Routes (Placeholder)
@@ -139,7 +144,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}', [AdminUserController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Report Management Routes (Placeholder)
@@ -149,7 +154,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Document Management Routes (Placeholder)
@@ -160,7 +165,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [DocumentController::class, 'store'])->name('store');
         Route::get('/{id}/download', [DocumentController::class, 'download'])->name('download');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Notification Management Routes (Placeholder)
@@ -171,7 +176,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
         Route::put('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Audit Log Management Routes (Placeholder)
@@ -181,7 +186,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [AuditLogController::class, 'index'])->name('index');
         Route::get('/{id}', [AuditLogController::class, 'show'])->name('show');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Settings Management Routes (Placeholder)

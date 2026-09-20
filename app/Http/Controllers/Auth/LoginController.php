@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 /**
  * LoginController
- * 
+ *
  * Handles user authentication including login form display,
  * authentication processing, and logout functionality.
  */
@@ -17,7 +20,7 @@ class LoginController extends Controller
     /**
      * Show the login form.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function showLoginForm()
     {
@@ -27,8 +30,7 @@ class LoginController extends Controller
     /**
      * Handle a login request to the application.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function login(Request $request)
     {
@@ -38,17 +40,17 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        $user = \App\Models\User::where('email', $credentials['email'])->first();
+        $user = User::where('email', $credentials['email'])->first();
 
         // Reject locked accounts before attempting auth
         if ($user && $user->isLocked()) {
             return back()->withErrors([
-                'email' => 'Account locked until ' . $user->locked_until->format('H:i') . '. Try again later.',
+                'email' => 'Account locked until '.$user->locked_until->format('H:i').'. Try again later.',
             ])->onlyInput('email');
         }
 
         // Reject deactivated accounts
-        if ($user && !$user->is_active) {
+        if ($user && ! $user->is_active) {
             return back()->withErrors([
                 'email' => 'This account has been deactivated.',
             ])->onlyInput('email');
@@ -76,8 +78,7 @@ class LoginController extends Controller
     /**
      * Log the user out of the application.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function logout(Request $request)
     {

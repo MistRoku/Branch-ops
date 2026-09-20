@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Creates tables for cash drawer management, refunds, and enhanced product tracking.
      */
     public function up(): void
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->timestamp('last_transaction_at')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index(['branch_id', 'status']);
             $table->index('identifier');
@@ -51,7 +51,7 @@ return new class extends Migration
             $table->morphs('reference'); // Polymorphic relation to sale, refund, etc.
             $table->json('metadata')->nullable();
             $table->timestamps();
-            
+
             // Indexes for querying
             $table->index(['cash_drawer_id', 'type']);
             $table->index(['branch_id', 'created_at']);
@@ -75,7 +75,7 @@ return new class extends Migration
             $table->foreignId('cash_drawer_id')->nullable()->constrained('cash_drawers')->nullOnDelete();
             $table->json('metadata')->nullable();
             $table->timestamps();
-            
+
             // Indexes for filtering
             $table->index(['sale_id', 'status']);
             $table->index(['branch_id', 'created_at']);
@@ -100,14 +100,14 @@ return new class extends Migration
         Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn([
                 'customer_id', 'authorization_code', 'status', 'void_reason', 'voided_by',
-                'voided_at', 'recall_reason', 'recalled_by', 'recalled_at', 'cash_drawer_id', 'metadata'
+                'voided_at', 'recall_reason', 'recalled_by', 'recalled_at', 'cash_drawer_id', 'metadata',
             ]);
         });
 
         Schema::table('products', function (Blueprint $table) {
             $table->dropColumn([
                 'branch_id', 'barcode_type', 'stock_quantity', 'low_stock_threshold',
-                'product_type', 'is_recalled', 'recall_reason', 'recalled_at', 'recall_batch', 'metadata'
+                'product_type', 'is_recalled', 'recall_reason', 'recalled_at', 'recall_batch', 'metadata',
             ]);
             $table->renameColumn('price', 'selling_price');
             $table->string('unit_of_measure')->nullable();

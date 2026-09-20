@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('variance'); // actual - expected
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index('stock_take_id');
             $table->index('product_id');
         });

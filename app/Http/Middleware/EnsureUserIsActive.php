@@ -10,11 +10,18 @@ class EnsureUserIsActive
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && !$request->user()->is_active) {
-            auth()->logout();
+        $user = $request->user();
+
+        if ($user && ! $user->is_active) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                abort(403, 'Account deactivated');
+            }
+
+            auth()->guard('web')->logout();
             $request->session()->invalidate();
             abort(403, 'Account deactivated');
         }
+
         return $next($request);
     }
 }

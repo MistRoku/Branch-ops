@@ -1,14 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\V1\DashboardController;
-use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\InventoryController;
-use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SalesController;
 use App\Http\Controllers\Api\V1\SearchController;
+use App\Http\Controllers\Api\V1\SupplierController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Cache\RateLimiting\Limit;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,7 +20,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 
 // Apply rate limiting to all API routes
 Route::middleware(['throttle:api'])->group(function () {
-    
+
     // Public endpoints (no authentication required)
     Route::get('/health', function () {
         return response()->json([
@@ -35,7 +33,7 @@ Route::middleware(['throttle:api'])->group(function () {
 
 // Protected API routes (authentication required)
 Route::middleware(['auth:sanctum'])->group(function () {
-    
+
     /*
     |--------------------------------------------------------------------------
     | Dashboard Routes
@@ -43,7 +41,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     */
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/dashboard/activity', [DashboardController::class, 'activityFeed']);
-    
+
     /*
     |--------------------------------------------------------------------------
     | Product Routes
@@ -57,7 +55,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [ProductController::class, 'destroy']);  // Delete product
         Route::get('/low-stock', [ProductController::class, 'lowStock']); // Low stock alert
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Inventory Routes
@@ -70,7 +68,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/valuation', [InventoryController::class, 'valuation']); // Inventory valuation
         Route::get('/all-movements', [InventoryController::class, 'allMovements']); // All movements
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Supplier Routes
@@ -83,7 +81,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [SupplierController::class, 'update']);      // Update supplier
         Route::delete('/{id}', [SupplierController::class, 'destroy']);  // Delete supplier
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Sales Routes
@@ -95,7 +93,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [SalesController::class, 'show']);        // Get sale
         Route::get('/stats', [SalesController::class, 'stats']);      // Sales statistics
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Search Routes

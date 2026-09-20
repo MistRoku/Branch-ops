@@ -30,10 +30,15 @@ class Document extends Model
     ];
 
     const TYPE_IMAGE = 'image';
+
     const TYPE_SPEC_SHEET = 'spec_sheet';
+
     const TYPE_INVOICE = 'invoice';
+
     const TYPE_DELIVERY_NOTE = 'delivery_note';
+
     const TYPE_STOCK_TAKE_REPORT = 'stock_take_report';
+
     const TYPE_OTHER = 'other';
 
     const ALLOWED_MIME_TYPES = [
@@ -85,7 +90,7 @@ class Document extends Model
             $bytes /= 1024;
         }
 
-        return round($bytes, 2) . ' ' . $units[$i];
+        return round($bytes, 2).' '.$units[$i];
     }
 
     public function isImage(): bool

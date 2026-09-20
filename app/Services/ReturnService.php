@@ -2,20 +2,19 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
+use App\Models\Branch;
+use App\Models\CashMovement;
+use App\Models\Notification;
 use App\Models\Sale;
 use App\Models\SaleRefund;
-use App\Models\CashDrawer;
-use App\Models\CashMovement;
 use App\Models\User;
-use App\Models\Notification;
-use App\Models\AuditLog;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ReturnService handles all refund, void, and recall operations.
- * 
+ *
  * Every operation requires proper authorization and creates audit trails.
  * Supports full refunds, partial refunds, item-level refunds, voids, and recalls.
  */
@@ -25,17 +24,19 @@ class ReturnService
      * Authorization thresholds requiring manager approval.
      */
     const REFUND_THRESHOLD = 100.00;
+
     const VOID_TIME_LIMIT_HOURS = 24;
 
     /**
      * Process a full refund for a sale.
-     * 
-     * @param Sale $sale The sale to refund
-     * @param User $user The user processing the refund
-     * @param string $reason Reason for the refund
-     * @param string|null $authorizationCode Manager authorization code if required
-     * @param string $paymentMethod Refund payment method (cash, card, original)
+     *
+     * @param  Sale  $sale  The sale to refund
+     * @param  User  $user  The user processing the refund
+     * @param  string  $reason  Reason for the refund
+     * @param  string|null  $authorizationCode  Manager authorization code if required
+     * @param  string  $paymentMethod  Refund payment method (cash, card, original)
      * @return SaleRefund The created refund record
+     *
      * @throws Exception If refund is not allowed or authorization fails
      */
     public function processFullRefund(
@@ -47,14 +48,14 @@ class ReturnService
     ): SaleRefund {
         return DB::transaction(function () use ($sale, $user, $reason, $authorizationCode, $paymentMethod) {
             // Validate sale can be refunded
-            if (!$sale->canBeRefunded()) {
+            if (! $sale->canBeRefunded()) {
                 throw new Exception('This sale cannot be refunded');
             }
 
             // Check if authorization is required
             $requiresAuth = $sale->total_amount >= self::REFUND_THRESHOLD;
-            if ($requiresAuth && !$this->validateAuthorization($authorizationCode, $user->branch)) {
-                throw new Exception('Valid manager authorization code required for refunds over $' . self::REFUND_THRESHOLD);
+            if ($requiresAuth && ! $this->validateAuthorization($authorizationCode, $user->branch)) {
+                throw new Exception('Valid manager authorization code required for refunds over $'.self::REFUND_THRESHOLD);
             }
 
             // Create refund record
@@ -81,7 +82,7 @@ class ReturnService
             // Restore stock quantities
             foreach ($sale->items as $item) {
                 $item->product->increment('stock_quantity', $item->quantity);
-                
+
                 // Create stock movement record
                 $item->product->stockMovements()->create([
                     'branch_id' => $sale->branch_id,
@@ -147,20 +148,20 @@ class ReturnService
         array $itemIds = []
     ): SaleRefund {
         return DB::transaction(function () use ($sale, $user, $amount, $reason, $authorizationCode, $itemIds) {
-            if (!$sale->canBeRefunded()) {
+            if (! $sale->canBeRefunded()) {
                 throw new Exception('This sale cannot be refunded');
             }
 
             // Validate refund amount doesn't exceed remaining balance
             $alreadyRefunded = $sale->total_refunded;
             $remainingBalance = $sale->total_amount - $alreadyRefunded;
-            
+
             if ($amount > $remainingBalance) {
                 throw new Exception("Refund amount exceeds remaining balance of \${$remainingBalance}");
             }
 
             $requiresAuth = $amount >= self::REFUND_THRESHOLD;
-            if ($requiresAuth && !$this->validateAuthorization($authorizationCode, $user->branch)) {
+            if ($requiresAuth && ! $this->validateAuthorization($authorizationCode, $user->branch)) {
                 throw new Exception('Valid manager authorization code required');
             }
 
@@ -204,17 +205,17 @@ class ReturnService
     public function voidSale(Sale $sale, User $user, string $reason, ?string $authorizationCode): Sale
     {
         return DB::transaction(function () use ($sale, $user, $reason, $authorizationCode) {
-            if (!$sale->canBeVoided()) {
+            if (! $sale->canBeVoided()) {
                 throw new Exception('This sale cannot be voided');
             }
 
             // Check time limit
             if ($sale->created_at->diffInHours(now()) > self::VOID_TIME_LIMIT_HOURS) {
-                throw new Exception('Sales can only be voided within ' . self::VOID_TIME_LIMIT_HOURS . ' hours');
+                throw new Exception('Sales can only be voided within '.self::VOID_TIME_LIMIT_HOURS.' hours');
             }
 
             // Voids always require authorization
-            if (!$this->validateAuthorization($authorizationCode, $user->branch)) {
+            if (! $this->validateAuthorization($authorizationCode, $user->branch)) {
                 throw new Exception('Valid manager authorization code required for voids');
             }
 
@@ -248,7 +249,7 @@ class ReturnService
     public function recallProduct(int $productId, string $reason, ?string $batch, User $recallingUser): void
     {
         $product = \App\Models\Product::findOrFail($productId);
-        
+
         $product->recall($reason, $batch);
 
         AuditLog::log(
@@ -260,7 +261,7 @@ class ReturnService
         );
 
         // Notify all branch managers
-        \App\Models\Branch::all()->each(function ($branch) use ($product, $reason) {
+        Branch::all()->each(function ($branch) use ($product, $reason) {
             if ($branch->manager_id) {
                 Notification::create([
                     'user_id' => $branch->manager_id,
@@ -285,7 +286,7 @@ class ReturnService
         }
 
         $manager = $this->getAuthorizingManager($code);
-        
+
         return $manager !== null && $manager->branch_id === $branch->id;
     }
 
@@ -299,7 +300,7 @@ class ReturnService
         }
 
         return User::where('role', 'manager')
-                   ->where('authorization_code', $code)
-                   ->first();
+            ->where('authorization_code', $code)
+            ->first();
     }
 }

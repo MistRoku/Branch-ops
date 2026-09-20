@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockLevel;
-use App\Services\InventoryService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
  * Product Controller - Handles CRUD operations for products
- * 
+ *
  * Provides API endpoints for managing product catalog including
  * creation, reading, updating, and deletion of products with
  * proper authorization and validation.
@@ -21,45 +20,45 @@ class ProductController extends Controller
 {
     /**
      * Display a listing of products with optional filtering
-     * 
-     * @param Request $request The HTTP request containing filters
+     *
+     * @param  Request  $request  The HTTP request containing filters
      * @return JsonResponse Collection of products
      */
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        
+
         $query = Product::with(['supplier', 'stockLevels']);
-        
+
         // Apply search filter if provided
         if ($request->has('search')) {
             $query->scopeSearchable($request->search);
         }
-        
+
         // Filter by active status
         if ($request->has('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
         }
-        
+
         // Filter by supplier
         if ($request->has('supplier_id')) {
             $query->where('supplier_id', $request->supplier_id);
         }
-        
+
         // Branch scoping for non-super-admin users
-        if (!$user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin()) {
             $query->whereHas('stockLevels', function ($q) use ($user) {
                 $q->where('branch_id', $user->branch_id);
             });
         }
-        
+
         $products = $query->paginate($request->get('per_page', 20));
 
         // Staff must not see cost prices (margin protection)
-        if (!$user->canSeeCostPrices()) {
-            $products->getCollection()->each(fn($p) => $p->makeHidden('cost_price'));
+        if (! $user->canSeeCostPrices()) {
+            $products->getCollection()->each(fn ($p) => $p->makeHidden('cost_price'));
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => $products,
@@ -69,20 +68,20 @@ class ProductController extends Controller
                 'per_page' => $products->perPage(),
                 'current_page' => $products->currentPage(),
                 'last_page' => $products->lastPage(),
-            ]
+            ],
         ]);
     }
 
     /**
      * Store a newly created product
-     * 
-     * @param Request $request The HTTP request with product data
+     *
+     * @param  Request  $request  The HTTP request with product data
      * @return JsonResponse The created product
      */
     public function store(Request $request): JsonResponse
     {
         // Only super admins can create products via API
-        if (!Auth::user()->isSuperAdmin()) {
+        if (! Auth::user()->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only super admins can create products',
@@ -126,24 +125,24 @@ class ProductController extends Controller
 
     /**
      * Display the specified product
-     * 
-     * @param int $id The product ID
+     *
+     * @param  int  $id  The product ID
      * @return JsonResponse The product details
      */
     public function show(int $id): JsonResponse
     {
         $product = Product::with(['supplier', 'stockLevels.branch', 'documents'])->findOrFail($id);
-        
+
         // Check authorization - must stock in caller's branch
         $user = Auth::user();
-        if (!$user->isSuperAdmin() && !$product->stockLevels->contains('branch_id', $user->branch_id)) {
+        if (! $user->isSuperAdmin() && ! $product->stockLevels->contains('branch_id', $user->branch_id)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access to this product',
             ], 403);
         }
 
-        if (!$user->canSeeCostPrices()) {
+        if (! $user->canSeeCostPrices()) {
             $product->makeHidden('cost_price');
         }
 
@@ -155,26 +154,26 @@ class ProductController extends Controller
 
     /**
      * Update the specified product
-     * 
-     * @param Request $request The HTTP request with updated data
-     * @param int $id The product ID
+     *
+     * @param  Request  $request  The HTTP request with updated data
+     * @param  int  $id  The product ID
      * @return JsonResponse The updated product
      */
     public function update(Request $request, int $id): JsonResponse
     {
         $product = Product::findOrFail($id);
-        
+
         // Check authorization
         $user = Auth::user();
-        if (!$user->isSuperAdmin() && !$user->canSeeCostPrices()) {
+        if (! $user->isSuperAdmin() && ! $user->canSeeCostPrices()) {
             $request->request->remove('cost_price');
         }
 
         $validated = $request->validate([
             'supplier_id' => 'nullable|exists:suppliers,id',
             'name' => 'sometimes|required|string|max:255',
-            'sku' => 'sometimes|required|string|max:100|unique:products,sku,' . $id,
-            'barcode' => 'nullable|string|max:100|unique:products,barcode,' . $id,
+            'sku' => 'sometimes|required|string|max:100|unique:products,sku,'.$id,
+            'barcode' => 'nullable|string|max:100|unique:products,barcode,'.$id,
             'description' => 'nullable|string',
             'cost_price' => 'sometimes|required|numeric|min:0',
             'selling_price' => 'sometimes|required|numeric|min:0',
@@ -196,17 +195,17 @@ class ProductController extends Controller
 
     /**
      * Remove the specified product (soft delete by setting is_active to false)
-     * 
-     * @param int $id The product ID
+     *
+     * @param  int  $id  The product ID
      * @return JsonResponse Success message
      */
     public function destroy(int $id): JsonResponse
     {
         $product = Product::findOrFail($id);
-        
+
         // Check authorization - only super admins can delete
         $user = Auth::user();
-        if (!$user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only super admins can delete products',
@@ -224,7 +223,7 @@ class ProductController extends Controller
 
     /**
      * Get low stock products
-     * 
+     *
      * @return JsonResponse Collection of low stock products
      */
     public function lowStock(): JsonResponse

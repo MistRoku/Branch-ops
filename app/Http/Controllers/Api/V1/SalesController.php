@@ -2,32 +2,30 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Events\SaleRecorded;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Services\SalesService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Sales Controller - Handles sales transactions via API
- * 
+ *
  * Provides endpoints for recording sales, retrieving sale history,
  * and generating sales reports with proper stock integration.
  */
 class SalesController extends Controller
 {
-    /**
-     * @var SalesService
-     */
     protected SalesService $salesService;
 
     /**
      * Create a new SalesController instance
-     * 
-     * @param SalesService $salesService The sales service
+     *
+     * @param  SalesService  $salesService  The sales service
      */
     public function __construct(SalesService $salesService)
     {
@@ -36,14 +34,14 @@ class SalesController extends Controller
 
     /**
      * Record a new sale transaction
-     * 
-     * @param Request $request The HTTP request with sale data
+     *
+     * @param  Request  $request  The HTTP request with sale data
      * @return JsonResponse The recorded sale
      */
     public function store(Request $request): JsonResponse
     {
         $user = Auth::user();
-        
+
         $validated = $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'customer_name' => 'nullable|string|max:255',
@@ -61,7 +59,7 @@ class SalesController extends Controller
         ]);
 
         // Check branch authorization
-        if (!$user->isSuperAdmin() && !$user->canAccessBranch($validated['branch_id'])) {
+        if (! $user->isSuperAdmin() && ! $user->canAccessBranch($validated['branch_id'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access to this branch',
@@ -80,7 +78,7 @@ class SalesController extends Controller
                 $itemSubtotal = $item['quantity'] * $item['price'];
                 $itemDiscount = $item['discount'] ?? 0;
                 $itemTax = ($itemSubtotal - $itemDiscount) * 0.1; // Assuming 10% tax
-                
+
                 $subtotal += $itemSubtotal;
                 $taxTotal += $itemTax;
                 $discountTotal += $itemDiscount;
@@ -130,7 +128,7 @@ class SalesController extends Controller
             DB::commit();
 
             // Fire event for real-time updates
-            event(new \App\Events\SaleRecorded($sale));
+            event(new SaleRecorded($sale));
 
             return response()->json([
                 'success' => true,
@@ -140,32 +138,32 @@ class SalesController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to record sale: ' . $e->getMessage(),
+                'message' => 'Failed to record sale: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Display a listing of sales with filtering
-     * 
-     * @param Request $request The HTTP request containing filters
+     *
+     * @param  Request  $request  The HTTP request containing filters
      * @return JsonResponse Collection of sales
      */
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        
+
         $query = Sale::with(['items.product', 'branch', 'user'])
             ->orderBy('created_at', 'desc');
-        
+
         // Filter by branch
         if ($request->has('branch_id')) {
             $query->where('branch_id', $request->branch_id);
         }
-        
+
         // Filter by date range
         if ($request->has('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);
@@ -173,22 +171,22 @@ class SalesController extends Controller
         if ($request->has('end_date')) {
             $query->whereDate('created_at', '<=', $request->end_date);
         }
-        
+
         // Filter by payment method
         if ($request->has('payment_method')) {
             $query->where('payment_method', $request->payment_method);
         }
-        
+
         // Filter by payment status
         if ($request->has('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
-        
+
         // Branch scoping for non-super-admin users
-        if (!$user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin()) {
             $query->where('branch_id', $user->branch_id);
         }
-        
+
         $sales = $query->paginate($request->get('per_page', 20));
 
         return response()->json([
@@ -200,14 +198,14 @@ class SalesController extends Controller
                 'per_page' => $sales->perPage(),
                 'current_page' => $sales->currentPage(),
                 'last_page' => $sales->lastPage(),
-            ]
+            ],
         ]);
     }
 
     /**
      * Display the specified sale
-     * 
-     * @param int $id The sale ID
+     *
+     * @param  int  $id  The sale ID
      * @return JsonResponse The sale details
      */
     public function show(int $id): JsonResponse
@@ -216,12 +214,12 @@ class SalesController extends Controller
             'items.product',
             'branch',
             'user',
-            'documents'
+            'documents',
         ])->findOrFail($id);
-        
+
         // Check authorization
         $user = Auth::user();
-        if (!$user->isSuperAdmin() && !$user->canAccessBranch($sale->branch_id)) {
+        if (! $user->isSuperAdmin() && ! $user->canAccessBranch($sale->branch_id)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access to this sale',
@@ -236,47 +234,47 @@ class SalesController extends Controller
 
     /**
      * Get sales statistics for dashboard
-     * 
-     * @param Request $request The HTTP request containing filters
+     *
+     * @param  Request  $request  The HTTP request containing filters
      * @return JsonResponse Sales statistics
      */
     public function stats(Request $request): JsonResponse
     {
         $user = Auth::user();
         $branchId = null;
-        
+
         // Only allow branch filter for super admins
         if ($request->has('branch_id') && $user->isSuperAdmin()) {
             $branchId = $request->branch_id;
-        } elseif (!$user->isSuperAdmin()) {
+        } elseif (! $user->isSuperAdmin()) {
             $branchId = $user->branch_id;
         }
-        
+
         $query = Sale::where('status', 'completed');
-        
+
         if ($branchId) {
             $query->where('branch_id', $branchId);
         }
-        
+
         // Today's sales
         $todaySales = (clone $query)
             ->whereDate('created_at', today())
             ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
             ->first();
-        
+
         // This week's sales
         $weekSales = (clone $query)
             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
             ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
             ->first();
-        
+
         // This month's sales
         $monthSales = (clone $query)
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
             ->first();
-        
+
         // Daily sales for last 7 days
         $dailySales = (clone $query)
             ->whereDate('created_at', '>=', now()->subDays(7))

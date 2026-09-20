@@ -26,6 +26,7 @@ class StockTakeService
                     'quantity_counted' => $item['quantity_counted'],
                 ]);
             }
+
             return $take;
         });
     }
@@ -40,6 +41,7 @@ class StockTakeService
                 }
             }
             $take->update(['status' => 'completed']);
+
             return $take->fresh('items');
         });
     }

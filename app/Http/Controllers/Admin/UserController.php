@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Branch;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 /**
  * User Controller - Admin UI for user management (super admin only)
@@ -18,7 +18,7 @@ class UserController extends Controller
 {
     protected function authorizeSuperAdmin(): void
     {
-        if (!Auth::user()->isSuperAdmin()) {
+        if (! Auth::user()->isSuperAdmin()) {
             abort(403, 'Only super admins can manage users');
         }
     }
@@ -31,7 +31,7 @@ class UserController extends Controller
 
         if ($request->filled('search')) {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $request->search);
-            $query->where(fn($q) => $q->where('name', 'like', "%{$escaped}%")
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$escaped}%")
                 ->orWhere('email', 'like', "%{$escaped}%"));
         }
 
@@ -104,7 +104,7 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:users,email,' . $id,
+            'email' => 'sometimes|required|email|unique:users,email,'.$id,
             'password' => 'nullable|string|min:8',
             'role' => ['nullable', Rule::in([User::ROLE_SUPER_ADMIN, User::ROLE_BRANCH_MANAGER, User::ROLE_STAFF])],
             'branch_id' => 'nullable|exists:branches,id',
@@ -116,7 +116,7 @@ class UserController extends Controller
         }
 
         // Prevent deactivating or demoting yourself
-        if ($user->id === Auth::id() && array_key_exists('is_active', $validated) && !$validated['is_active']) {
+        if ($user->id === Auth::id() && array_key_exists('is_active', $validated) && ! $validated['is_active']) {
             return redirect()->back()->withErrors(['is_active' => 'You cannot deactivate your own account']);
         }
 

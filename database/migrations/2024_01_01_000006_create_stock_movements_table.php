@@ -23,12 +23,12 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamp('occurred_at');
             $table->timestamps();
-            
+
             $table->index(['product_id', 'branch_id', 'created_at']);
             $table->index(['reference_type', 'reference_id']);
             $table->index('type');
         });
-        
+
         // Partition by month for large datasets (MySQL 8+)
         // This is done via raw SQL in a seeder or manually for production
     }

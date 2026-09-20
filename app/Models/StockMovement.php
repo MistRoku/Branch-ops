@@ -35,10 +35,15 @@ class StockMovement extends Model
     ];
 
     const TYPE_SALE = 'sale';
+
     const TYPE_PURCHASE = 'purchase';
+
     const TYPE_TRANSFER_IN = 'transfer_in';
+
     const TYPE_TRANSFER_OUT = 'transfer_out';
+
     const TYPE_ADJUSTMENT = 'adjustment';
+
     const TYPE_STOCK_TAKE = 'stock_take';
 
     public function product(): BelongsTo
