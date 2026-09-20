@@ -26,35 +26,27 @@ class Product extends Model
     const TYPE_SERVICE = 'service';
 
     protected $fillable = [
-        'branch_id',
         'supplier_id',
         'name',
         'description',
         'sku',
         'barcode',
-        'barcode_type',
-        'price',
         'cost_price',
+        'selling_price',
         'tax_rate',
-        'stock_quantity',
-        'low_stock_threshold',
-        'product_type',
-        'is_recalled',
-        'recall_reason',
-        'recalled_at',
-        'recall_batch',
-        'metadata',
+        'unit_of_measure',
+        'reorder_level',
+        'is_active',
+        'attributes',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'selling_price' => 'decimal:2',
         'tax_rate' => 'decimal:2',
-        'stock_quantity' => 'integer',
-        'low_stock_threshold' => 'integer',
-        'is_recalled' => 'boolean',
-        'recalled_at' => 'datetime',
-        'metadata' => 'array',
+        'reorder_level' => 'integer',
+        'is_active' => 'boolean',
+        'attributes' => 'array',
     ];
 
     /**
