@@ -38,6 +38,11 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
+    public function documents()
+    {
+        return $this->morphMany(Document::class, 'entity');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
