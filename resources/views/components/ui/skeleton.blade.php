@@ -20,4 +20,4 @@
     ];
 @endphp
 
-<div class="skeleton {{ $heightClasses[$height] ?? $heightClasses['default'] }} {{ $widthClasses[$width] ?? $widthClasses['full'] }}"></div>
+<div role="status" aria-label="Loading content" class="animate-pulse bg-brand-200 {{ $heightClasses[$height] ?? $heightClasses['default'] }} {{ $widthClasses[$width] ?? $widthClasses['full'] }}"></div>

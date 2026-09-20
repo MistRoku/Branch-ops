@@ -18,15 +18,16 @@
     @stack('styles')
 </head>
 <body class="bg-brand-50 text-brand-900" x-data="layoutData()">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-brand-900 text-white flex-shrink-0">
+        <aside class="w-64 bg-brand-900 text-white flex-shrink-0" aria-label="Primary">
             <div class="p-4 border-b border-brand-700">
                 <h1 class="text-lg font-semibold tracking-wide">BRANCHOPS</h1>
                 <p class="text-xs text-brand-400 mt-1">Operations Platform</p>
             </div>
 
-            <nav class="p-4">
+            <nav class="p-4" aria-label="Admin sections">
                 <ul class="space-y-1">
                     <li>
                         <a href="/pos" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('pos') ? 'bg-brand-800' : '' }}">
@@ -117,7 +118,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-auto">
+        <main id="main-content" class="flex-1 overflow-auto" tabindex="-1">
             <!-- Top Bar -->
             <header class="bg-white border-b border-brand-200 px-6 py-3">
                 <div class="flex items-center justify-between">
@@ -126,9 +127,9 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         <!-- Global Search -->
-                        <div x-data="{ open: false }" class="relative">
-                            <button @click="open = !open" class="p-2 hover:bg-brand-100">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div x-data="{ open: false }" class="relative" @keydown.escape.window="open = false">
+                            <button @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="true" aria-label="Open global search" class="p-2 hover:bg-brand-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
                             </button>
@@ -136,9 +137,9 @@
                         </div>
 
                         <!-- Notifications -->
-                        <div x-data="{ open: false, unread: 0 }" class="relative">
-                            <button @click="open = !open" class="p-2 hover:bg-brand-100 relative">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div x-data="{ open: false, unread: 0 }" class="relative" @keydown.escape.window="open = false">
+                            <button @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="true" aria-label="Open notifications" class="p-2 hover:bg-brand-100 relative">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                                 </svg>
                                 <span x-show="unread > 0" class="absolute top-1 right-1 w-2 h-2 bg-danger rounded-none"></span>

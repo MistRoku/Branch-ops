@@ -28,7 +28,41 @@ body {
     transition: none !important;
 }
 
-/* Flat button styles */
+/* Visible keyboard focus - meets WCAG 2.4.7 */
+:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* Skip link - hidden until focused */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.625rem 1rem;
+    background-color: #0f172a;
+    color: #ffffff;
+    font-size: 0.875rem;
+}
+
+.skip-link:focus {
+    left: 0.5rem;
+    top: 0.5rem;
+}
+
+/* Respect users who prefer no motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Flat button styles - used by x-ui.button */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -83,14 +117,7 @@ body {
     outline-offset: -1px;
 }
 
-/* Card styles - flat, no shadows, no rounded corners */
-.card {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    padding: 1.5rem;
-}
-
-/* Table styles */
+/* Table styles - used by x-ui.table */
 .table-container {
     overflow-x: auto;
     border: 1px solid #e2e8f0;
@@ -127,74 +154,6 @@ body {
     background-color: #f8fafc;
 }
 
-/* Badge styles */
-.badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.25rem 0.625rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.badge-success {
-    background-color: #dcfce7;
-    color: #166534;
-}
-
-.badge-warning {
-    background-color: #fef9c3;
-    color: #854d0e;
-}
-
-.badge-danger {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-.badge-info {
-    background-color: #cffafe;
-    color: #0e7490;
-}
-
-/* Skeleton loader */
-.skeleton {
-    background: linear-gradient(
-        90deg,
-        #e2e8f0 0%,
-        #cbd5e1 50%,
-        #e2e8f0 100%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-}
-
-@keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-.skeleton-text {
-    height: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.skeleton-title {
-    height: 1.5rem;
-    width: 60%;
-    margin-bottom: 1rem;
-}
-
-.skeleton-card {
-    height: 8rem;
-    margin-bottom: 1rem;
-}
-
 /* Scrollable horizontal region for KPIs */
 .scroll-x-auto {
     overflow-x: auto;
@@ -217,27 +176,7 @@ body {
     background: #94a3b8;
 }
 
-/* Modal styles */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(15, 23, 42, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-}
-
-.modal-content {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    max-width: 32rem;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-/* Alert styles */
+/* Alert styles - used by layout flash messages and x-ui.alert */
 .alert {
     padding: 1rem;
     border: 1px solid;
@@ -268,14 +207,7 @@ body {
     color: #991b1b;
 }
 
-/* Utility classes */
-.text-truncate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sr-only {
+/* Screen-reader-only text */
     position: absolute;
     width: 1px;
     height: 1px;
