@@ -100,19 +100,36 @@ class Product extends Model
     }
 
     /**
-     * Scope to get recalled products.
+     * Scope to active products only.
      */
-    public function scopeRecalled($query)
+    public function scopeActive($query)
     {
-        return $query->where('is_recalled', true);
+        return $query->where('is_active', true);
     }
 
     /**
-     * Scope to get low stock products.
+     * Scope to search by name, SKU or barcode.
+     */
+    public function scopeSearchable($query, string $term)
+    {
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $term);
+
+        return $query->where(fn ($q) => $q->where('name', 'like', "%{$escaped}%")
+            ->orWhere('sku', 'like', "%{$escaped}%")
+            ->orWhere('barcode', 'like', "%{$escaped}%"));
+    }
+
+    /**
+     * Scope to products with low stock in any branch.
      */
     public function scopeLowStock($query)
     {
-        return $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
+        return $query->whereExists(function ($q) {
+            $q->selectRaw('1')
+                ->from('stock_levels')
+                ->whereColumn('stock_levels.product_id', 'products.id')
+                ->whereColumn('stock_levels.quantity', '<=', 'products.reorder_level');
+        });
     }
 
     /**
@@ -124,41 +141,23 @@ class Product extends Model
     }
 
     /**
+     * Total on-hand quantity across all branches.
+     */
+    public function getTotalStockAttribute(): int
+    {
+        return (int) $this->stockLevels->sum('quantity');
+    }
+
+    /**
      * Check if product is available for sale.
      */
     public function isAvailable(): bool
     {
-        return ! $this->is_recalled && $this->stock_quantity > 0;
+        return $this->is_active && $this->total_stock > 0;
     }
 
     /**
-     * Mark product as recalled.
-     */
-    public function recall(string $reason, ?string $batch = null): void
-    {
-        $this->update([
-            'is_recalled' => true,
-            'recall_reason' => $reason,
-            'recall_batch' => $batch,
-            'recalled_at' => now(),
-        ]);
-    }
-
-    /**
-     * Clear product recall status.
-     */
-    public function clearRecall(): void
-    {
-        $this->update([
-            'is_recalled' => false,
-            'recall_reason' => null,
-            'recall_batch' => null,
-            'recalled_at' => null,
-        ]);
-    }
-
-    /**
-     * Get searchable attributes for Meilisearch.
+     * Get searchable attributes.
      */
     public function toSearchableArray(): array
     {
@@ -168,7 +167,6 @@ class Product extends Model
             'description' => $this->description,
             'sku' => $this->sku,
             'barcode' => $this->barcode,
-            'branch_id' => $this->branch_id,
         ];
     }
 }

@@ -236,20 +236,22 @@ class Notification extends DatabaseNotification
     /**
      * Create a low stock notification.
      */
-    public static function createLowStock(Product $product, User $recipient): self
+    public static function createLowStock(Product $product, User $recipient, ?int $currentStock = null): self
     {
+        $stock = $currentStock ?? (int) $product->stockLevels()->sum('quantity');
+
         return static::create([
             'user_id' => $recipient->id,
             'type' => self::TYPE_LOW_STOCK,
             'title' => 'Low Stock Alert',
-            'message' => "{$product->name} has dropped below threshold ({$product->stock_quantity} remaining)",
+            'message' => "{$product->name} has dropped below threshold ({$stock} remaining)",
             'entity_type' => Product::class,
             'entity_id' => $product->id,
             'priority' => self::PRIORITY_HIGH,
             'data' => [
                 'product_name' => $product->name,
-                'current_stock' => $product->stock_quantity,
-                'threshold' => $product->low_stock_threshold,
+                'current_stock' => $stock,
+                'threshold' => $product->reorder_level,
             ],
         ]);
     }

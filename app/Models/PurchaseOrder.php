@@ -104,6 +104,15 @@ class PurchaseOrder extends Model
         return in_array($this->status, [self::STATUS_SENT, self::STATUS_PARTIAL_RECEIVED]);
     }
 
+    /**
+     * The purchase_orders table stores the grand total in `total_amount`;
+     * expose it as `total` to match the search and reporting call sites.
+     */
+    public function getTotalAttribute(): float
+    {
+        return (float) ($this->attributes['total'] ?? $this->attributes['total_amount'] ?? 0);
+    }
+
     public function getReceivedPercentageAttribute(): float
     {
         $totalOrdered = $this->items->sum('quantity_ordered');

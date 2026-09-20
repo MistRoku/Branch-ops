@@ -40,13 +40,13 @@ class DashboardController extends Controller
         $todaySales = Sale::where('status', 'completed')
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', today())
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total')
             ->first();
 
         $yesterdaySales = Sale::where('status', 'completed')
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', today()->subDay())
-            ->selectRaw('COALESCE(SUM(total), 0) as total, COUNT(*) as count')
+            ->selectRaw('COALESCE(SUM(total_amount), 0) as total, COUNT(*) as count')
             ->first();
 
         $salesChange = $yesterdaySales->total > 0
@@ -94,7 +94,7 @@ class DashboardController extends Controller
         $revenueChart = Sale::where('status', 'completed')
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', '>=', now()->subDays(13))
-            ->selectRaw('DATE(created_at) as date, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('DATE(created_at) as date, COALESCE(SUM(total_amount), 0) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('total', 'date');

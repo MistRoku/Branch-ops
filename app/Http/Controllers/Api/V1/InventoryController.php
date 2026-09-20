@@ -232,7 +232,7 @@ class InventoryController extends Controller
 
         // Filter by movement type
         if ($request->has('movement_type')) {
-            $query->where('movement_type', $request->movement_type);
+            $query->where('type', $request->movement_type);
         }
 
         // Filter by date range

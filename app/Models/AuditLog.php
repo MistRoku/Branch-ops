@@ -67,6 +67,29 @@ class AuditLog extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Convenience writer used by services. The audit_logs table is
+     * append-only (updates/deletes are blocked in boot()).
+     */
+    public static function log(
+        ?User $actor,
+        Model $entity,
+        string $action,
+        string $description = '',
+        array $data = []
+    ): static {
+        return static::create([
+            'user_id' => $actor?->id,
+            'entity_type' => $entity::class,
+            'entity_id' => $entity->getKey(),
+            'action' => $action,
+            'description' => $description,
+            'new_values' => $data ?: null,
+            'ip_address' => request()->ip(),
+            'user_agent' => substr((string) request()->userAgent(), 0, 500),
+        ]);
+    }
+
     public function scopeByAction($query, string $action)
     {
         return $query->where('action', $action);

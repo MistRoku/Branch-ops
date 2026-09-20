@@ -121,15 +121,22 @@ class ReturnService
 
             // Notify managers of large refunds
             if ($sale->total_amount >= self::REFUND_THRESHOLD) {
-                Notification::create([
-                    'user_id' => $user->branch->manager_id,
-                    'type' => Notification::TYPE_REFUND_PENDING,
-                    'title' => 'Large Refund Processed',
-                    'message' => "Full refund of \${$sale->total_amount} processed by {$user->name}",
-                    'entity_type' => SaleRefund::class,
-                    'entity_id' => $refund->id,
-                    'priority' => Notification::PRIORITY_NORMAL,
-                ]);
+                $managerId = User::where('role', User::ROLE_BRANCH_MANAGER)
+                    ->where('branch_id', $user->branch_id)
+                    ->where('is_active', true)
+                    ->value('id');
+
+                if ($managerId) {
+                    Notification::create([
+                        'user_id' => $managerId,
+                        'type' => Notification::TYPE_REFUND_PENDING,
+                        'title' => 'Large Refund Processed',
+                        'message' => "Full refund of \${$sale->total_amount} processed by {$user->name}",
+                        'entity_type' => SaleRefund::class,
+                        'entity_id' => $refund->id,
+                        'priority' => Notification::PRIORITY_NORMAL,
+                    ]);
+                }
             }
 
             return $refund;
@@ -244,13 +251,15 @@ class ReturnService
     }
 
     /**
-     * Recall a product from sales.
+     * Recall a product from sales. There is no recall column set on the
+     * products table, so a recall deactivates the product to block
+     * further sales and notifies every branch manager.
      */
     public function recallProduct(int $productId, string $reason, ?string $batch, User $recallingUser): void
     {
         $product = \App\Models\Product::findOrFail($productId);
 
-        $product->recall($reason, $batch);
+        $product->update(['is_active' => false]);
 
         AuditLog::log(
             $recallingUser,
@@ -261,10 +270,11 @@ class ReturnService
         );
 
         // Notify all branch managers
-        Branch::all()->each(function ($branch) use ($product, $reason) {
-            if ($branch->manager_id) {
+        User::where('role', User::ROLE_BRANCH_MANAGER)
+            ->where('is_active', true)
+            ->each(function ($manager) use ($product, $reason) {
                 Notification::create([
-                    'user_id' => $branch->manager_id,
+                    'user_id' => $manager->id,
                     'type' => Notification::TYPE_PRODUCT_RECALL,
                     'title' => 'Product Recall Alert',
                     'message' => "{$product->name} has been recalled: {$reason}",
@@ -272,8 +282,7 @@ class ReturnService
                     'entity_id' => $product->id,
                     'priority' => Notification::PRIORITY_URGENT,
                 ]);
-            }
-        });
+            });
     }
 
     /**

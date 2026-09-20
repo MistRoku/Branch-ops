@@ -62,18 +62,20 @@ class InventoryService
 
             $stockLevel->save();
 
-            // Record stock movement
+            // Record stock movement (columns match the stock_movements table:
+            // `type` enum, `notes`, and `occurred_at` are all required)
             StockMovement::create([
                 'product_id' => $productId,
                 'branch_id' => $branchId,
                 'user_id' => Auth::id(),
+                'type' => $this->movementType($referenceType),
                 'quantity_before' => $oldQuantity,
                 'quantity_after' => $stockLevel->quantity,
                 'quantity_change' => $quantityAdjustment,
-                'movement_type' => $quantityAdjustment > 0 ? 'in' : 'out',
-                'reason' => $reason,
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
+                'notes' => $reason,
+                'occurred_at' => now(),
             ]);
 
             // Check for low stock and trigger alert if needed
@@ -84,6 +86,21 @@ class InventoryService
 
             return $stockLevel->fresh(['product', 'branch']);
         });
+    }
+
+    /**
+     * Map a reference type to the stock_movements.type enum.
+     */
+    protected function movementType(string $referenceType): string
+    {
+        return match ($referenceType) {
+            'sale' => StockMovement::TYPE_SALE,
+            'purchase' => StockMovement::TYPE_PURCHASE,
+            'transfer_in' => StockMovement::TYPE_TRANSFER_IN,
+            'transfer_out' => StockMovement::TYPE_TRANSFER_OUT,
+            'stock_take' => StockMovement::TYPE_STOCK_TAKE,
+            default => StockMovement::TYPE_ADJUSTMENT,
+        };
     }
 
     /**

@@ -130,8 +130,8 @@ class CashMovement extends Model
      */
     public function requiresAuthorization(): bool
     {
-        // Payouts over $50, transfers, and adjustments always require authorization
-        return in_array($this->type, [self::TYPE_PAYOUT, self::TYPE_TRANSFER, self::TYPE_ADJUSTMENT])
+        // Payouts over R50, transfers, and adjustments always require authorization
+        return in_array($this->type, [self::TYPE_TRANSFER, self::TYPE_ADJUSTMENT])
             || ($this->type === self::TYPE_PAYOUT && $this->amount > 50.00);
     }
 }

@@ -14,6 +14,7 @@ class Sale extends Model
     protected $fillable = [
         'branch_id',
         'user_id',
+        'cash_drawer_id',
         'invoice_number',
         'status',
         'subtotal',
@@ -82,8 +83,18 @@ class Sale extends Model
 
     public function scopeThisMonth($query)
     {
-        return $query->whereMonth('completed_at', now()->month)
-            ->whereYear('completed_at', now()->year);
+        return $query->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year);
+    }
+
+    /**
+     * The sales table stores the grand total in `total_amount`; expose it
+     * as `total` so API responses, reports and dashboard aggregates share
+     * one name. Raw selects aliasing `SUM(...) as total` take precedence.
+     */
+    public function getTotalAttribute(): float
+    {
+        return (float) ($this->attributes['total'] ?? $this->attributes['total_amount'] ?? 0);
     }
 
     public static function generateInvoiceNumber(int $branchId): string

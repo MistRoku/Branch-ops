@@ -87,20 +87,27 @@ class CashService
 
             // Create variance notification if significant
             if (abs($variance) > 10.00) {
-                Notification::create([
-                    'user_id' => $user->branch->manager_id,
-                    'type' => Notification::TYPE_CASH_VARIANCE,
-                    'title' => 'Cash Drawer Variance',
-                    'message' => "Drawer {$drawer->identifier} has variance of \${$variance}",
-                    'entity_type' => CashDrawer::class,
-                    'entity_id' => $drawer->id,
-                    'priority' => Notification::PRIORITY_HIGH,
-                    'data' => [
-                        'variance' => $variance,
-                        'expected' => $expectedBalance,
-                        'counted' => $countedAmount,
-                    ],
-                ]);
+                $managerId = User::where('role', User::ROLE_BRANCH_MANAGER)
+                    ->where('branch_id', $user->branch_id)
+                    ->where('is_active', true)
+                    ->value('id');
+
+                if ($managerId) {
+                    Notification::create([
+                        'user_id' => $managerId,
+                        'type' => Notification::TYPE_CASH_VARIANCE,
+                        'title' => 'Cash Drawer Variance',
+                        'message' => "Drawer {$drawer->identifier} has variance of \${$variance}",
+                        'entity_type' => CashDrawer::class,
+                        'entity_id' => $drawer->id,
+                        'priority' => Notification::PRIORITY_HIGH,
+                        'data' => [
+                            'variance' => $variance,
+                            'expected' => $expectedBalance,
+                            'counted' => $countedAmount,
+                        ],
+                    ]);
+                }
             }
 
             AuditLog::log(

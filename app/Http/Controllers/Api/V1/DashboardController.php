@@ -43,14 +43,14 @@ class DashboardController extends Controller
         $salesToday = Sale::where('status', 'completed')
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', today())
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total')
             ->first();
 
         // Sales this week
         $salesWeek = Sale::where('status', 'completed')
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total')
             ->first();
 
         // Sales this month
@@ -58,7 +58,7 @@ class DashboardController extends Controller
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total')
             ->first();
 
         // Low stock count
@@ -85,7 +85,7 @@ class DashboardController extends Controller
         $revenueData = Sale::where('status', 'completed')
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereDate('created_at', '>=', now()->subDays(7))
-            ->selectRaw('DATE(created_at) as date, SUM(total) as total')
+            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->get();

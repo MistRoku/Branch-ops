@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Events\SaleRecorded;
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Services\SalesService;
+use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,16 +21,14 @@ use Illuminate\Support\Facades\DB;
  */
 class SalesController extends Controller
 {
-    protected SalesService $salesService;
+    protected InventoryService $inventory;
 
     /**
      * Create a new SalesController instance
-     *
-     * @param  SalesService  $salesService  The sales service
      */
-    public function __construct(SalesService $salesService)
+    public function __construct(InventoryService $inventory)
     {
-        $this->salesService = $salesService;
+        $this->inventory = $inventory;
     }
 
     /**
@@ -43,23 +42,25 @@ class SalesController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'branch_id' => 'required|exists:branches,id',
-            'customer_name' => 'nullable|string|max:255',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_phone' => 'nullable|string|max:50',
+            'branch_id' => 'nullable|exists:branches,id',
             'payment_method' => 'required|in:cash,card,mobile,credit',
-            'payment_status' => 'required|in:paid,pending,partial',
-            'amount_paid' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
-            'items.*.discount' => 'nullable|numeric|min:0',
         ]);
 
+        $branchId = $validated['branch_id'] ?? $user->branch_id;
+        if (! $branchId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A branch is required to record a sale.',
+            ], 422);
+        }
+
         // Check branch authorization
-        if (! $user->isSuperAdmin() && ! $user->canAccessBranch($validated['branch_id'])) {
+        if (! $user->isSuperAdmin() && ! $user->canAccessBranch($branchId)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access to this branch',
@@ -67,68 +68,75 @@ class SalesController extends Controller
         }
 
         try {
-            DB::beginTransaction();
+            $sale = DB::transaction(function () use ($validated, $branchId, $user) {
+                $subtotal = 0;
+                $taxTotal = 0;
+                $lines = [];
 
-            // Calculate totals
-            $subtotal = 0;
-            $taxTotal = 0;
-            $discountTotal = 0;
+                foreach ($validated['items'] as $item) {
+                    $product = Product::findOrFail($item['product_id']);
+                    $lineSubtotal = $item['quantity'] * $item['price'];
+                    $lineTax = $lineSubtotal * ((float) $product->tax_rate / 100);
 
-            foreach ($validated['items'] as &$item) {
-                $itemSubtotal = $item['quantity'] * $item['price'];
-                $itemDiscount = $item['discount'] ?? 0;
-                $itemTax = ($itemSubtotal - $itemDiscount) * 0.1; // Assuming 10% tax
+                    $subtotal += $lineSubtotal;
+                    $taxTotal += $lineTax;
+                    $lines[] = [
+                        'product' => $product,
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'subtotal' => $lineSubtotal,
+                        'tax' => $lineTax,
+                    ];
+                }
 
-                $subtotal += $itemSubtotal;
-                $taxTotal += $itemTax;
-                $discountTotal += $itemDiscount;
-            }
+                $total = $subtotal + $taxTotal;
 
-            $total = $subtotal + $taxTotal - $discountTotal;
-
-            // Create the sale
-            $sale = Sale::create([
-                'branch_id' => $validated['branch_id'],
-                'user_id' => $user->id,
-                'customer_name' => $validated['customer_name'] ?? null,
-                'customer_email' => $validated['customer_email'] ?? null,
-                'customer_phone' => $validated['customer_phone'] ?? null,
-                'payment_method' => $validated['payment_method'],
-                'payment_status' => $validated['payment_status'],
-                'subtotal' => $subtotal,
-                'tax' => $taxTotal,
-                'discount' => $discountTotal,
-                'total' => $total,
-                'amount_paid' => $validated['amount_paid'] ?? $total,
-                'notes' => $validated['notes'] ?? null,
-                'status' => 'completed',
-            ]);
-
-            // Create sale items and reduce stock
-            foreach ($validated['items'] as $itemData) {
-                SaleItem::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $itemData['product_id'],
-                    'quantity' => $itemData['quantity'],
-                    'price' => $itemData['price'],
-                    'discount' => $itemData['discount'] ?? 0,
-                    'tax' => (($itemData['quantity'] * $itemData['price']) - ($itemData['discount'] ?? 0)) * 0.1,
+                // Columns match the sales table: subtotal / tax_amount /
+                // discount_amount / total_amount (there is no `total` column).
+                $sale = Sale::create([
+                    'branch_id' => $branchId,
+                    'user_id' => $user->id,
+                    'invoice_number' => Sale::generateInvoiceNumber($branchId),
+                    'payment_method' => $validated['payment_method'],
+                    'subtotal' => $subtotal,
+                    'tax_amount' => $taxTotal,
+                    'discount_amount' => 0,
+                    'total_amount' => $total,
+                    'notes' => $validated['notes'] ?? null,
+                    'status' => 'completed',
+                    'completed_at' => now(),
                 ]);
 
-                // Reduce stock
-                $this->salesService->reduceStock(
-                    $itemData['product_id'],
-                    $validated['branch_id'],
-                    $itemData['quantity'],
-                    'sale',
-                    $sale->id
-                );
-            }
+                foreach ($lines as $line) {
+                    SaleItem::create([
+                        'sale_id' => $sale->id,
+                        'product_id' => $line['product']->id,
+                        'quantity' => $line['quantity'],
+                        'unit_price' => $line['price'],
+                        'unit_cost' => $line['product']->cost_price,
+                        'tax_rate' => $line['product']->tax_rate,
+                        'tax_amount' => $line['tax'],
+                        'discount_amount' => 0,
+                        'subtotal' => $line['subtotal'],
+                        'total' => $line['subtotal'] + $line['tax'],
+                    ]);
 
-            DB::commit();
+                    // Row-locked, audited stock reduction (throws on oversell)
+                    $this->inventory->adjustStock(
+                        $line['product']->id,
+                        $branchId,
+                        -$line['quantity'],
+                        "Sale {$sale->invoice_number}",
+                        'sale',
+                        $sale->id
+                    );
+                }
+
+                return $sale;
+            });
 
             // Fire event for real-time updates
-            event(new SaleRecorded($sale));
+            event(new SaleRecorded($sale, $branchId));
 
             return response()->json([
                 'success' => true,
@@ -137,8 +145,6 @@ class SalesController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to record sale: '.$e->getMessage(),
@@ -259,26 +265,26 @@ class SalesController extends Controller
         // Today's sales
         $todaySales = (clone $query)
             ->whereDate('created_at', today())
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total')
             ->first();
 
         // This week's sales
         $weekSales = (clone $query)
             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total')
             ->first();
 
         // This month's sales
         $monthSales = (clone $query)
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total')
             ->first();
 
         // Daily sales for last 7 days
         $dailySales = (clone $query)
             ->whereDate('created_at', '>=', now()->subDays(7))
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count, SUM(total) as total')
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count, SUM(total_amount) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
