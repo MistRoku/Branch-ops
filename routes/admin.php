@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -120,13 +121,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('users')->name('admin.users.')->group(function () {
-        // Route::get('/', [UserController::class, 'index'])->name('index');
-        // Route::get('/create', [UserController::class, 'create'])->name('create');
-        // Route::post('/', [UserController::class, 'store'])->name('store');
-        // Route::get('/{id}', [UserController::class, 'show'])->name('show');
-        // Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit');
-        // Route::put('/{id}', [UserController::class, 'update'])->name('update');
-        // Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AdminUserController::class, 'index'])->name('index');
+        Route::get('/create', [AdminUserController::class, 'create'])->name('create');
+        Route::post('/', [AdminUserController::class, 'store'])->name('store');
+        Route::get('/{id}', [AdminUserController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AdminUserController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminUserController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
     
     /*
