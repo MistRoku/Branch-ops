@@ -4,29 +4,20 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            Route::middleware(['web', 'auth', 'verified'])->prefix('admin')->group(base_path('routes/admin.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Strip version fingerprinting and add baseline hardening headers
-        $middleware->append(function ($request, $next) {
-            $response = $next($request);
-            $response->headers->set('X-Content-Type-Options', 'nosniff');
-            $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
-            $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-            $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-            if ($request->isSecure()) {
-                $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-            }
-            $response->headers->remove('X-Powered-By');
-            $response->headers->remove('Server');
-
-            return $response;
-        });
+        $middleware->append(\App\Http\Middleware\AddSecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

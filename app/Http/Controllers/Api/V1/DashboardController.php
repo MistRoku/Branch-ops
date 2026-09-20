@@ -202,7 +202,7 @@ class DashboardController extends Controller
                 'type' => 'sale',
                 'icon' => 'shopping-cart',
                 'title' => 'New Sale',
-                'description' => "Sale #{$sale->id} - {$sale->items_count ?? 0} items",
+                'description' => 'Sale #' . $sale->id . ' - ' . ($sale->items_count ?? 0) . ' items',
                 'amount' => $sale->total,
                 'user' => $sale->user->name,
                 'branch' => $sale->branch->name,
