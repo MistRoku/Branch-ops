@@ -10,6 +10,7 @@ use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Inventory Service - Handles all inventory-related operations
@@ -40,14 +41,14 @@ class InventoryService
     ): StockLevel {
         return DB::transaction(function () use ($productId, $branchId, $quantityAdjustment, $reason, $referenceType, $referenceId) {
             if ($quantityAdjustment === 0) {
-                throw new \InvalidArgumentException('Adjustment quantity cannot be zero');
+                throw ValidationException::withMessages(['quantity_adjustment' => 'Adjustment quantity cannot be zero']);
             }
 
             // Lock the row to prevent concurrent adjustments racing
             $stockLevel = StockLevel::where('product_id', $productId)
                 ->where('branch_id', $branchId)
                 ->lockForUpdate()
-                ->first() ?? StockLevel::create(
+                ->first() ?? StockLevel::firstOrCreate(
                     ['product_id' => $productId, 'branch_id' => $branchId],
                     ['quantity' => 0, 'valuation' => 0]
                 );
@@ -57,7 +58,7 @@ class InventoryService
 
             // Prevent negative stock
             if ($stockLevel->quantity < 0) {
-                throw new \InvalidArgumentException('Stock cannot be negative');
+                throw ValidationException::withMessages(['quantity' => 'Stock cannot be negative']);
             }
 
             $stockLevel->save();
@@ -245,10 +246,10 @@ class InventoryService
     ): array {
         return DB::transaction(function () use ($productId, $fromBranchId, $toBranchId, $quantity, $reason, $transferId) {
             if ($fromBranchId === $toBranchId) {
-                throw new \InvalidArgumentException('Source and destination branches must differ');
+                throw ValidationException::withMessages(['from_branch_id' => 'Source and destination branches must differ']);
             }
             if ($quantity <= 0) {
-                throw new \InvalidArgumentException('Transfer quantity must be positive');
+                throw ValidationException::withMessages(['quantity' => 'Transfer quantity must be positive']);
             }
 
             // Reduce stock from source branch

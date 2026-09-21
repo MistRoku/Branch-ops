@@ -2,18 +2,6 @@
 
 Multi-branch retail operations platform — POS terminal, inventory, transfers, purchasing, and role-based admin. Built with Laravel, Blade, Tailwind CSS, and Alpine.js.
 
-## Screenshots
-
-> Capture these in 2 minutes against seeded demo data (`php artisan migrate:fresh --seed`, log in as `admin@branchops.test` / `password123`):
-
-| POS terminal (`/pos`) | Dashboard (`/admin/dashboard`) | Inventory (`/admin/inventory`) |
-|---|---|---|
-| `docs/screenshots/pos.png` | `docs/screenshots/dashboard.png` | `docs/screenshots/inventory.png` |
-
-![POS terminal](docs/screenshots/pos.png)
-![Admin dashboard](docs/screenshots/dashboard.png)
-![Inventory](docs/screenshots/inventory.png)
-
 ## Features
 
 - **POS terminal** — product grid, cart, checkout, sale recording with atomic stock reduction
@@ -66,7 +54,7 @@ What `setup.*` does: installs PHP + JS dependencies, creates `.env` + app key, r
 Manual equivalent:
 
 ```sh
-composer install          # Windows: add --ignore-platform-reqs (Horizon needs pcntl/posix)
+composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed

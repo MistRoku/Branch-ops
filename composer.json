@@ -10,7 +10,6 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "laravel/reverb": "^1.0",
-        "laravel/horizon": "^5.0",
         "laravel/scout": "^10.0",
         "dompdf/dompdf": "^2.0",
         "maatwebsite/excel": "^3.1",
