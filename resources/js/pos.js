@@ -37,12 +37,27 @@ export function posTerminal({ branchId = null } = {}) {
         },
 
         formatPrice,
+        _loadingPromise: null,
 
         async init() {
             await this.loadProducts();
         },
 
         async loadProducts() {
+            // Ignore duplicate calls while a load is already in flight so a
+            // slow network plus repeated clicks cannot stack up requests.
+            if (this._loadingPromise) {
+                return this._loadingPromise;
+            }
+            this._loadingPromise = this._fetchProducts();
+            try {
+                return await this._loadingPromise;
+            } finally {
+                this._loadingPromise = null;
+            }
+        },
+
+        async _fetchProducts() {
             this.loading = true;
             this.loadError = '';
             try {

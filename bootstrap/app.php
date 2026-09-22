@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Required for Sanctum cookie/session auth on API routes: starts
+        // the session for first-party frontend requests so auth:sanctum
+        // can resolve the logged-in web user. Without this every POS API
+        // call returns 401 even with a valid session cookie.
+        $middleware->statefulApi();
         $middleware->append(AddSecurityHeaders::class);
         $middleware->appendToGroup('web', EnsureUserIsActive::class);
         $middleware->appendToGroup('api', EnsureUserIsActive::class);

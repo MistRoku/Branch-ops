@@ -104,5 +104,5 @@ $registerProtectedApiRoutes = function () {
     Route::get('/search', [SearchController::class, 'index']);  // Global search
 };
 
-Route::middleware(['auth:sanctum'])->group($registerProtectedApiRoutes);
-Route::middleware(['auth:sanctum'])->prefix('v1')->group($registerProtectedApiRoutes);
+Route::middleware(['auth:sanctum', 'throttle:120,1'])->group($registerProtectedApiRoutes);
+Route::middleware(['auth:sanctum', 'throttle:120,1'])->prefix('v1')->group($registerProtectedApiRoutes);
