@@ -12,9 +12,17 @@ export default defineConfig({
         }),
     ],
     server: {
-        // Bind all interfaces so `npm run dev` works on Windows, Linux,
-        // WSL2 and Docker without per-OS overrides. Port stays default 5173.
-        host: true,
+        // Fixed for Laragon Apache + `php artisan serve` used together.
+        // Use explicit IPv4 loopback so browsers never resolve `http://[::]:5173`
+        // from a stale `public/hot` file. Both Laragon vhosts and artisan serve
+        // can load HMR from 127.0.0.1:5173.
+        host: '127.0.0.1',
+        port: 5173,
         strictPort: true,
+        cors: true,
+        hmr: {
+            host: '127.0.0.1',
+            port: 5173,
+        },
     },
 });

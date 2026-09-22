@@ -3,8 +3,11 @@ import axios from 'axios';
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
 export const http = axios.create({
+    withCredentials: true,
+    withXSRFToken: true,
     headers: {
         'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json',
         ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
     },
 });

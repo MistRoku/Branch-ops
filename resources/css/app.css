@@ -28,6 +28,21 @@ body {
     transition: none !important;
 }
 
+/* Alpine cloak - prevents unstyled flash before JS boots */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Skeleton loaders - flat blocks, no shimmer gradients */
+.skeleton-block {
+    background-color: #e2e8f0;
+}
+
+.skeleton-text {
+    background-color: #e2e8f0;
+    height: 1rem;
+}
+
 /* Visible keyboard focus - meets WCAG 2.4.7 */
 :focus-visible {
     outline: 2px solid #2563eb;
@@ -108,7 +123,7 @@ body {
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
     border: 1px solid #cbd5e1;
-    background-color: #ffffff;
+    background-color: #f1f5f9;
     color: #0f172a;
 }
 
@@ -218,4 +233,19 @@ body {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+}
+
+/* Design constraint enforcement: no pure white surfaces.
+   Legacy Blade views still use bg-white / bg-gray-50. Remap them to
+   flat off-white so nothing renders as #FFFFFF. */
+.bg-white {
+    background-color: #f1f5f9 !important;
+}
+
+.bg-gray-50 {
+    background-color: #f8fafc !important;
+}
+
+.bg-gray-100 {
+    background-color: #f1f5f9 !important;
 }

@@ -10,6 +10,6 @@
     ];
 @endphp
 
-<div class="bg-white {{ $bordered ? 'border border-brand-200' : '' }} {{ $paddingClasses[$padding] }}">
+<div class="bg-brand-100 {{ $bordered ? 'border border-brand-200' : '' }} {{ $paddingClasses[$padding] }}">
     {{ $slot }}
 </div>

@@ -120,7 +120,7 @@
         <!-- Main Content -->
         <main id="main-content" class="flex-1 overflow-auto" tabindex="-1">
             <!-- Top Bar -->
-            <header class="bg-white border-b border-brand-200 px-6 py-3">
+            <header class="bg-brand-100 border-b border-brand-200 px-6 py-3">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
                         @yield('header-left')

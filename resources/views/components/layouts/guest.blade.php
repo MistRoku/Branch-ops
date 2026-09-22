@@ -18,7 +18,20 @@
     @stack('styles')
 </head>
 <body class="bg-brand-50 text-brand-900">
-    @yield('content')
+    <div class="min-h-screen flex flex-col">
+        <div class="flex-1">
+            @yield('content')
+        </div>
+        <footer class="border-t border-brand-200 bg-brand-100 px-4 py-4">
+            <div class="max-w-md mx-auto flex items-center justify-center gap-4 text-xs text-brand-600">
+                <span>&copy; {{ date('Y') }} BranchOps Platform</span>
+                <span aria-hidden="true">|</span>
+                <a href="{{ route('terms') }}" class="underline">Terms of Service</a>
+                <span aria-hidden="true">|</span>
+                <a href="{{ route('privacy') }}" class="underline">Privacy Policy</a>
+            </div>
+        </footer>
+    </div>
 
     @stack('scripts')
 </body>

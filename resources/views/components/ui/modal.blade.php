@@ -20,7 +20,7 @@
     aria-modal="true"
     aria-label="{{ $ariaLabel }}"
 >
-    <div class="w-full bg-white border border-brand-200 max-h-[90vh] overflow-y-auto {{ $maxWidthClasses[$maxWidth] ?? $maxWidthClasses['md'] }}">
+    <div class="w-full bg-brand-100 border border-brand-200 max-h-[90vh] overflow-y-auto {{ $maxWidthClasses[$maxWidth] ?? $maxWidthClasses['md'] }}">
         @if(isset($header))
             <div class="px-6 py-4 border-b border-brand-200">
                 <div class="flex items-center justify-between">
