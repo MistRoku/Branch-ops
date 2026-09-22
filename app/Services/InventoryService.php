@@ -44,14 +44,30 @@ class InventoryService
                 throw ValidationException::withMessages(['quantity_adjustment' => 'Adjustment quantity cannot be zero']);
             }
 
-            // Lock the row to prevent concurrent adjustments racing
+            // Lock the row to prevent concurrent adjustments racing. The
+            // (product_id, branch_id) unique index guarantees a single row;
+            // if two requests race the insert, retry the locked select.
             $stockLevel = StockLevel::where('product_id', $productId)
                 ->where('branch_id', $branchId)
                 ->lockForUpdate()
-                ->first() ?? StockLevel::firstOrCreate(
-                    ['product_id' => $productId, 'branch_id' => $branchId],
-                    ['quantity' => 0, 'valuation' => 0]
-                );
+                ->first();
+            if (! $stockLevel) {
+                try {
+                    $stockLevel = StockLevel::create(
+                        ['product_id' => $productId, 'branch_id' => $branchId],
+                        ['quantity' => 0, 'valuation' => 0]
+                    );
+                    $stockLevel = StockLevel::where('product_id', $productId)
+                        ->where('branch_id', $branchId)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                } catch (\Illuminate\Database\QueryException $e) {
+                    $stockLevel = StockLevel::where('product_id', $productId)
+                        ->where('branch_id', $branchId)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                }
+            }
 
             $oldQuantity = $stockLevel->quantity;
             $stockLevel->quantity += $quantityAdjustment;
@@ -79,10 +95,11 @@ class InventoryService
                 'occurred_at' => now(),
             ]);
 
-            // Check for low stock and trigger alert if needed
+            // Fire low-stock alerts only after the transaction commits, so
+            // a rolled-back adjustment never triggers listeners.
             $product = Product::findOrFail($productId);
             if ($stockLevel->quantity <= $product->reorder_level) {
-                event(new StockLowAlert($product, $stockLevel));
+                DB::afterCommit(fn () => event(new StockLowAlert($product, $stockLevel)));
             }
 
             return $stockLevel->fresh(['product', 'branch']);
