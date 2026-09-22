@@ -21,7 +21,7 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="min-h-screen flex" x-data="{ collapsed: localStorage.getItem('bo-sidebar') === '1' }" x-init="$watch('collapsed', v => localStorage.setItem('bo-sidebar', v ? '1' : '0'))">
         <!-- Sidebar -->
-        <aside class="bg-brand-900 text-white flex-shrink-0 flex flex-col min-h-screen" :class="collapsed ? 'w-16' : 'w-64'" aria-label="Primary">
+        <aside class="bg-brand-900 text-white flex-shrink-0 flex flex-col h-screen sticky top-0" :class="collapsed ? 'w-16' : 'w-64'" aria-label="Primary">
             <div class="p-4 border-b border-brand-700 flex items-center gap-3">
                 <div class="w-9 h-9 themed-bg flex items-center justify-center font-bold shrink-0">B</div>
                 <div x-show="!collapsed">
@@ -30,7 +30,7 @@
                 </div>
             </div>
 
-            <nav class="p-4 flex-1 overflow-y-auto" aria-label="Admin sections">
+            <nav class="bo-nav p-4 flex-1 overflow-y-auto min-h-0" aria-label="Admin sections">
                 <ul class="space-y-1">
                     <li>
                         <a href="/pos" title="POS Terminal" class="flex items-center gap-3 px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('pos') ? 'bg-brand-800' : '' }}">
@@ -76,7 +76,12 @@
                 </ul>
             </nav>
 
-            <div class="p-4 border-t border-brand-700">
+            <div class="p-4 border-t border-brand-700 space-y-1">
+                <button @click="collapsed = !collapsed" :title="collapsed ? 'Expand navigation' : 'Collapse navigation'" aria-label="Toggle navigation"
+                        class="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-brand-800">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path x-show="!collapsed" d="M15 19l-7-7 7-7"/><path x-show="collapsed" d="M9 5l7 7-7 7"/></svg>
+                    <span x-show="!collapsed" x-text="collapsed ? 'Expand' : 'Collapse'"></span>
+                </button>
                 <div class="text-xs text-brand-400 mb-2" x-show="!collapsed">
                     Connected: <span x-text="connectionStatus"></span>
                 </div>
@@ -85,13 +90,6 @@
                     <button type="submit" title="Logout" class="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-brand-800">
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                         <span x-show="!collapsed">Logout</span>
-                    </button>
-                </form>
-            </div>
-                <form method="POST" action="/logout">
-                    @csrf
-                    <button type="submit" class="w-full text-left px-3 py-2 text-sm hover:bg-brand-800">
-                        Logout
                     </button>
                 </form>
             </div>

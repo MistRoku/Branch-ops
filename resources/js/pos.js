@@ -2,6 +2,7 @@ import { http, errorMessage } from './http';
 import { formatPrice } from './format';
 
 const DISPLAY_KEY = 'branchops-pos-display';
+const suspendKey = (branch) => `branchops-suspended-${branch ?? 'all'}`;
 
 /**
  * POS terminal state. Prices honor active specials, quantities stay
@@ -53,6 +54,9 @@ export function posTerminal({ branchId = null } = {}) {
         quoteError: '',
 
         showHistory: false,
+        showPay: false,
+        showSuspended: false,
+        suspended: [],
         pastSales: [],
         historyLoading: false,
         historyError: '',
@@ -131,7 +135,87 @@ export function posTerminal({ branchId = null } = {}) {
             } catch {
                 // Default display stands.
             }
+            this.loadSuspended();
             await this.loadProducts();
+        },
+
+        loadSuspended() {
+            try {
+                this.suspended = JSON.parse(localStorage.getItem(suspendKey(branchId)) ?? '[]');
+            } catch {
+                this.suspended = [];
+            }
+        },
+
+        persistSuspended() {
+            try {
+                localStorage.setItem(suspendKey(branchId), JSON.stringify(this.suspended));
+            } catch {
+                // Parking is best-effort.
+            }
+        },
+
+        openPay() {
+            if (this.cart.length === 0) {
+                return;
+            }
+            this.checkoutError = '';
+            this.showPay = true;
+        },
+
+        closePay() {
+            this.showPay = false;
+        },
+
+        suspendSale() {
+            if (this.cart.length === 0) {
+                return;
+            }
+            const count = this.cartCount;
+            this.suspended.unshift({
+                id: Date.now(),
+                label: `${count} item${count === 1 ? '' : 's'} — ${formatPrice(this.total)}`,
+                summary: this.cart.map((i) => `${i.quantity} x ${i.product_name}`).join(', ').slice(0, 120),
+                savedAt: new Date().toLocaleString(),
+                cart: this.cart,
+                customer: this.selectedCustomer,
+                fulfillment: this.fulfillment,
+                deliveryAddress: this.deliveryAddress,
+                deliveryFee: this.deliveryFee,
+                tip: this.tip,
+                couponCode: this.couponApplied,
+                couponDiscount: this.couponDiscount,
+            });
+            this.persistSuspended();
+            this.clearCart();
+            this.clearCustomer();
+        },
+
+        resumeSuspended(id) {
+            const parked = this.suspended.find((s) => s.id === id);
+            if (!parked) {
+                return;
+            }
+            if (this.cart.length > 0) {
+                this.suspendSale();
+            }
+            this.cart = parked.cart ?? [];
+            this.selectedCustomer = parked.customer ?? null;
+            this.fulfillment = parked.fulfillment ?? 'pickup';
+            this.deliveryAddress = parked.deliveryAddress ?? '';
+            this.deliveryFee = parked.deliveryFee ?? 0;
+            this.tip = parked.tip ?? 0;
+            this.couponCode = parked.couponCode ?? '';
+            this.couponDiscount = parked.couponDiscount ?? 0;
+            this.couponApplied = parked.couponCode ?? '';
+            this.suspended = this.suspended.filter((s) => s.id !== id);
+            this.persistSuspended();
+            this.showSuspended = false;
+        },
+
+        discardSuspended(id) {
+            this.suspended = this.suspended.filter((s) => s.id !== id);
+            this.persistSuspended();
         },
 
         saveDisplay() {
@@ -413,6 +497,7 @@ export function posTerminal({ branchId = null } = {}) {
                 this.lastSaleId = data?.data?.invoice_number ?? data?.data?.id ?? 'N/A';
                 this.lastSaleDbId = data?.data?.id ?? null;
                 this.lastSaleTotal = Number(data?.data?.total_amount) || this.total;
+                this.showPay = false;
                 this.showSuccessModal = true;
             } catch (error) {
                 this.checkoutError = errorMessage(error, 'Failed to complete sale. Please try again.');

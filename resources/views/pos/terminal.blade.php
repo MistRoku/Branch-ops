@@ -114,113 +114,177 @@
             </template>
         </div>
 
-        <!-- Payment + totals -->
+        <!-- Cart Footer: totals summary + next actions -->
         <div class="p-4 border-t border-brand-200 bg-brand-50">
             <p x-show="checkoutError" x-text="checkoutError" class="mb-3 text-sm text-danger" role="alert"></p>
-            <div class="mb-3 border border-brand-200 bg-brand-100 p-2">
-                <p class="text-xs font-medium text-brand-700 mb-1">Customer (keeps them coming back)</p>
-                <template x-if="!selectedCustomer">
-                    <div>
-                        <input x-model="customerSearch" @input.debounce.300ms="searchCustomers()" placeholder="Search name or phone..." class="w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
-                        <template x-if="customerSearching"><p class="text-xs text-brand-500 mt-1">Searching...</p></template>
-                        <template x-for="c in customerResults" :key="c.id">
-                            <button @click="selectCustomer(c)" class="w-full text-left text-xs px-2 py-1 border-b border-brand-100">
-                                <span class="font-medium" x-text="c.name"></span>
-                                <span class="text-brand-500" x-text="c.phone ?? ''"></span>
-                            </button>
+            <div class="text-sm mb-1 flex justify-between">
+                <span class="text-brand-600" x-text="selectedCustomer ? selectedCustomer.name : 'Walk-in customer'"></span>
+                <span class="font-medium" x-text="cartCount + (cartCount === 1 ? ' item' : ' items')"></span>
+            </div>
+            <div class="space-y-1 mb-3 text-sm">
+                <div class="flex justify-between"><span class="text-brand-600">Subtotal</span><span class="font-medium" x-text="formatPrice(subtotal)"></span></div>
+                <div x-show="discount > 0" class="flex justify-between"><span class="text-brand-600">Discount</span><span class="font-medium" x-text="formatPrice(discount)"></span></div>
+                <div class="flex justify-between text-base font-semibold pt-1 border-t border-brand-200">
+                    <span class="text-brand-900">Total</span>
+                    <span class="themed-text" x-text="formatPrice(total)"></span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <button @click="openPay()" :disabled="cart.length === 0"
+                        class="themed-bg col-span-2 py-3 font-medium disabled:opacity-50 disabled:cursor-not-allowed">Pay</button>
+                <button @click="suspendSale()" :disabled="cart.length === 0"
+                        class="py-2 text-sm border border-brand-300 bg-brand-100 font-medium disabled:opacity-50">Suspend sale</button>
+                <button @click="showSuspended = true" class="py-2 text-sm border border-brand-300 bg-brand-100 font-medium">Resume<span x-show="suspended.length > 0" x-text="' (' + suspended.length + ')'"></span></button>
+                <button @click="saveQuote()" :disabled="cart.length === 0 || quoteSaving"
+                        class="py-2 text-sm border border-brand-300 bg-brand-100 font-medium disabled:opacity-50">
+                    <span x-show="!quoteSaving">Save quote</span><span x-show="quoteSaving" x-cloak>Saving...</span>
+                </button>
+                <button @click="openHistory()" class="py-2 text-sm border border-brand-300 bg-brand-100 font-medium">Sales history</button>
+            </div>
+            <p x-show="quoteNumber" class="text-xs text-success mt-2">Quotation <span x-text="quoteNumber"></span> saved. Print the proforma from Quotations in back office.</p>
+            <p x-show="quoteError" x-text="quoteError" class="text-xs text-danger mt-2"></p>
+        </div>
+    </div>
+
+    <!-- Payment popup -->
+    <div x-show="showPay" x-cloak
+         @keydown.escape.window="closePay()"
+         role="dialog" aria-modal="true" aria-label="Take payment"
+         class="fixed inset-0 bg-brand-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-brand-100 border border-brand-200 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-4 border-b border-brand-200 flex items-center justify-between">
+                <h2 class="font-semibold text-brand-900">Take Payment — <span x-text="formatPrice(total)"></span></h2>
+                <button @click="closePay()" class="text-sm underline">Cancel</button>
+            </div>
+            <div class="p-4">
+                <p x-show="checkoutError" x-text="checkoutError" class="mb-3 text-sm text-danger" role="alert"></p>
+                <div class="mb-3 border border-brand-200 bg-brand-50 p-2">
+                    <p class="text-xs font-medium text-brand-700 mb-1">Customer (keeps them coming back)</p>
+                    <template x-if="!selectedCustomer">
+                        <div>
+                            <input x-model="customerSearch" @input.debounce.300ms="searchCustomers()" placeholder="Search name or phone..." class="w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
+                            <template x-if="customerSearching"><p class="text-xs text-brand-500 mt-1">Searching...</p></template>
+                            <template x-for="c in customerResults" :key="c.id">
+                                <button @click="selectCustomer(c)" class="w-full text-left text-xs px-2 py-1 border-b border-brand-100">
+                                    <span class="font-medium" x-text="c.name"></span>
+                                    <span class="text-brand-500" x-text="c.phone ?? ''"></span>
+                                </button>
+                            </template>
+                            <button @click="showNewCustomer = !showNewCustomer" class="text-xs underline mt-1">New customer</button>
+                            <div x-show="showNewCustomer" class="mt-1 space-y-1">
+                                <input x-model="newCustomerName" placeholder="Full name" class="w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
+                                <input x-model="newCustomerPhone" placeholder="Phone" class="w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
+                                <p x-show="customerError" x-text="customerError" class="text-xs text-danger"></p>
+                                <button @click="createCustomer()" class="px-3 py-1 text-xs bg-brand-900 text-white font-medium">Add customer</button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="selectedCustomer">
+                        <p class="text-xs flex items-center justify-between">
+                            <span><span class="font-medium" x-text="selectedCustomer.name"></span>
+                            <span class="text-brand-500" x-text="' · ' + (selectedCustomer.sales_count ?? 0) + ' past sales · ' + (selectedCustomer.loyalty_points ?? 0) + ' pts'"></span></span>
+                            <button @click="clearCustomer()" class="underline">Remove</button>
+                        </p>
+                    </template>
+                </div>
+                <div class="mb-3">
+                    <p class="text-xs font-medium text-brand-700 mb-1">Payment method</p>
+                    <div class="flex gap-1">
+                        <template x-for="method in ['cash','card','split']" :key="method">
+                            <button @click="paymentMethod = method" class="flex-1 px-2 py-1.5 text-xs font-medium border"
+                                    :class="paymentMethod === method ? 'themed-bg border-transparent' : 'border-brand-300 bg-brand-50 text-brand-700'"
+                                    x-text="method.charAt(0).toUpperCase() + method.slice(1)"></button>
                         </template>
-                        <button @click="showNewCustomer = !showNewCustomer" class="text-xs underline mt-1">New customer</button>
-                        <div x-show="showNewCustomer" class="mt-1 space-y-1">
-                            <input x-model="newCustomerName" placeholder="Full name" class="w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
-                            <input x-model="newCustomerPhone" placeholder="Phone" class="w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
-                            <p x-show="customerError" x-text="customerError" class="text-xs text-danger"></p>
-                            <button @click="createCustomer()" class="px-3 py-1 text-xs bg-brand-900 text-white font-medium">Add customer</button>
+                    </div>
+                    <div x-show="paymentMethod === 'card'" class="mt-2">
+                        <label class="text-xs text-brand-700">Card reference<input x-model="paymentReference" placeholder="Card slip reference" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" /></label>
+                    </div>
+                    <div x-show="paymentMethod === 'split'" class="mt-2 flex gap-2">
+                        <label class="flex-1 text-xs text-brand-700">Cash (R)<input x-model="splitCash" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" /></label>
+                        <label class="flex-1 text-xs text-brand-700">Card (R)<input x-model="splitCard" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" /></label>
+                    </div>
+                    <p x-show="paymentMethod === 'split'" class="text-xs mt-1" :class="splitBalanced ? 'text-success' : 'text-danger'" x-text="'Split total R ' + splitTotal.toFixed(2) + (splitBalanced ? ' (balanced)' : ' (must equal total)')"></p>
+                </div>
+                <div class="mb-3">
+                    <p class="text-xs font-medium text-brand-700 mb-1">Fulfilment</p>
+                    <div class="flex gap-1 mb-2">
+                        <template x-for="option in ['pickup','delivery']" :key="option">
+                            <button @click="fulfillment = option" class="flex-1 px-2 py-1.5 text-xs font-medium border"
+                                    :class="fulfillment === option ? 'themed-bg border-transparent' : 'border-brand-300 bg-brand-50 text-brand-700'"
+                                    x-text="option.charAt(0).toUpperCase() + option.slice(1)"></button>
+                        </template>
+                    </div>
+                    <div x-show="fulfillment === 'delivery'" class="flex gap-2">
+                        <input x-model="deliveryAddress" placeholder="Delivery address" class="flex-1 px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
+                        <input x-model.number="deliveryFee" type="number" min="0" step="0.01" placeholder="Fee" class="w-20 px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
+                    </div>
+                </div>
+                <div class="flex gap-2 mb-3">
+                    <label class="flex-1 text-xs text-brand-700">Tip (R)<input x-model.number="tip" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" /></label>
+                    <label x-show="paymentMethod === 'cash'" class="flex-1 text-xs text-brand-700">Tendered (R)<input x-model="tendered" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" /></label>
+                </div>
+                <div class="mb-3">
+                    <template x-if="!couponApplied">
+                        <div class="flex gap-2">
+                            <input x-model="couponCode" placeholder="Coupon code" class="flex-1 px-2 py-1.5 text-sm border border-brand-300 bg-brand-50" />
+                            <button @click="applyCoupon()" class="px-3 py-1.5 text-sm border border-brand-300 bg-brand-50 font-medium">Apply</button>
+                        </div>
+                    </template>
+                    <p x-show="couponError" x-text="couponError" class="text-xs text-danger mt-1"></p>
+                    <p x-show="couponApplied" class="text-xs text-success mt-1 flex items-center justify-between">
+                        <span>Coupon <span x-text="couponApplied"></span>: -<span x-text="formatPrice(couponDiscount)"></span></span>
+                        <button @click="removeCoupon()" class="underline">Remove</button>
+                    </p>
+                </div>
+                <div class="space-y-1 mb-4 text-sm border-t border-brand-200 pt-3">
+                    <div class="flex justify-between"><span class="text-brand-600">Subtotal</span><span class="font-medium" x-text="formatPrice(subtotal)"></span></div>
+                    <div class="flex justify-between"><span class="text-brand-600">Discount</span><span class="font-medium" x-text="formatPrice(discount)"></span></div>
+                    <div class="flex justify-between"><span class="text-brand-600">Tax</span><span class="font-medium" x-text="formatPrice(tax)"></span></div>
+                    <div class="flex justify-between"><span class="text-brand-600">Tip</span><span class="font-medium" x-text="formatPrice(Number(tip || 0))"></span></div>
+                    <div x-show="fulfillment === 'delivery'" class="flex justify-between"><span class="text-brand-600">Delivery fee</span><span class="font-medium" x-text="formatPrice(deliveryFeeAmount)"></span></div>
+                    <div class="flex justify-between text-lg font-semibold pt-2 border-t border-brand-200">
+                        <span class="text-brand-900">Total due</span>
+                        <span class="themed-text" x-text="formatPrice(total)"></span>
+                    </div>
+                    <div x-show="paymentMethod === 'cash' && tendered !== ''" class="flex justify-between">
+                        <span class="text-brand-600">Change</span><span class="font-medium" x-text="formatPrice(Math.max(0, change))"></span>
+                    </div>
+                </div>
+                <button @click="processCheckout()" :disabled="cart.length === 0 || processing"
+                        class="themed-bg w-full py-3 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!processing">Confirm payment</span>
+                    <span x-show="processing" x-cloak>Processing...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suspended sales -->
+    <div x-show="showSuspended" x-cloak
+         @keydown.escape.window="showSuspended = false"
+         role="dialog" aria-modal="true" aria-label="Suspended sales"
+         class="fixed inset-0 bg-brand-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-brand-100 border border-brand-200 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="p-4 border-b border-brand-200 flex items-center justify-between">
+                <h2 class="font-semibold text-brand-900">Suspended Sales</h2>
+                <button @click="showSuspended = false" class="text-sm underline">Close</button>
+            </div>
+            <div class="p-4 space-y-2">
+                <template x-if="suspended.length === 0"><p class="text-sm text-brand-600 text-center py-6">No suspended sales. Suspend a sale to serve the next customer.</p></template>
+                <template x-for="parked in suspended" :key="parked.id">
+                    <div class="border border-brand-200 bg-brand-50 p-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium" x-text="parked.label"></span>
+                            <span class="text-brand-600 text-xs" x-text="parked.savedAt"></span>
+                        </div>
+                        <p class="text-xs text-brand-600 mt-1" x-text="parked.summary"></p>
+                        <div class="flex gap-2 mt-2">
+                            <button @click="resumeSuspended(parked.id)" class="px-3 py-1.5 text-xs themed-bg font-medium">Resume</button>
+                            <button @click="discardSuspended(parked.id)" class="px-3 py-1.5 text-xs border border-brand-300 font-medium">Discard</button>
                         </div>
                     </div>
                 </template>
-                <template x-if="selectedCustomer">
-                    <p class="text-xs flex items-center justify-between">
-                        <span><span class="font-medium" x-text="selectedCustomer.name"></span>
-                        <span class="text-brand-500" x-text="' · ' + (selectedCustomer.sales_count ?? 0) + ' past sales · ' + (selectedCustomer.loyalty_points ?? 0) + ' pts'"></span></span>
-                        <button @click="clearCustomer()" class="underline">Remove</button>
-                    </p>
-                </template>
             </div>
-            <div class="mb-3">
-                <p class="text-xs font-medium text-brand-700 mb-1">Payment method</p>
-                <div class="flex gap-1">
-                    <template x-for="method in ['cash','card','split']" :key="method">
-                        <button @click="paymentMethod = method" class="flex-1 px-2 py-1.5 text-xs font-medium border"
-                                :class="paymentMethod === method ? 'themed-bg border-transparent' : 'border-brand-300 bg-brand-100 text-brand-700'"
-                                x-text="method.charAt(0).toUpperCase() + method.slice(1)"></button>
-                    </template>
-                </div>
-                <div x-show="paymentMethod === 'card'" class="mt-2">
-                    <label class="text-xs text-brand-700">Card reference<input x-model="paymentReference" placeholder="Card slip reference" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" /></label>
-                </div>
-                <div x-show="paymentMethod === 'split'" class="mt-2 flex gap-2">
-                    <label class="flex-1 text-xs text-brand-700">Cash (R)<input x-model="splitCash" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" /></label>
-                    <label class="flex-1 text-xs text-brand-700">Card (R)<input x-model="splitCard" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" /></label>
-                </div>
-                <p x-show="paymentMethod === 'split'" class="text-xs mt-1" :class="splitBalanced ? 'text-success' : 'text-danger'" x-text="'Split total R ' + splitTotal.toFixed(2) + (splitBalanced ? ' (balanced)' : ' (must equal total)')"></p>
-            </div>
-            <div class="mb-3">
-                <p class="text-xs font-medium text-brand-700 mb-1">Fulfilment</p>
-                <div class="flex gap-1 mb-2">
-                    <template x-for="option in ['pickup','delivery']" :key="option">
-                        <button @click="fulfillment = option" class="flex-1 px-2 py-1.5 text-xs font-medium border"
-                                :class="fulfillment === option ? 'themed-bg border-transparent' : 'border-brand-300 bg-brand-100 text-brand-700'"
-                                x-text="option.charAt(0).toUpperCase() + option.slice(1)"></button>
-                    </template>
-                </div>
-                <div x-show="fulfillment === 'delivery'" class="flex gap-2">
-                    <input x-model="deliveryAddress" placeholder="Delivery address" class="flex-1 px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" />
-                    <input x-model.number="deliveryFee" type="number" min="0" step="0.01" placeholder="Fee" class="w-20 px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" />
-                </div>
-            </div>
-            <div class="flex gap-2 mb-3">
-                <label class="flex-1 text-xs text-brand-700">Tip (R)<input x-model.number="tip" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" /></label>
-                <label x-show="paymentMethod === 'cash'" class="flex-1 text-xs text-brand-700">Tendered (R)<input x-model="tendered" type="number" min="0" step="0.01" class="mt-1 w-full px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" /></label>
-            </div>
-            <div class="mb-3">
-                <template x-if="!couponApplied">
-                    <div class="flex gap-2">
-                        <input x-model="couponCode" placeholder="Coupon code" class="flex-1 px-2 py-1.5 text-sm border border-brand-300 bg-brand-100" />
-                        <button @click="applyCoupon()" class="px-3 py-1.5 text-sm border border-brand-300 bg-brand-100 font-medium">Apply</button>
-                    </div>
-                </template>
-                <p x-show="couponError" x-text="couponError" class="text-xs text-danger mt-1"></p>
-                <p x-show="couponApplied" class="text-xs text-success mt-1 flex items-center justify-between">
-                    <span>Coupon <span x-text="couponApplied"></span>: -<span x-text="formatPrice(couponDiscount)"></span></span>
-                    <button @click="removeCoupon()" class="underline">Remove</button>
-                </p>
-            </div>
-            <div class="space-y-2 mb-4 text-sm">
-                <div class="flex justify-between"><span class="text-brand-600">Subtotal</span><span class="font-medium" x-text="formatPrice(subtotal)"></span></div>
-                <div class="flex justify-between"><span class="text-brand-600">Discount</span><span class="font-medium" x-text="formatPrice(discount)"></span></div>
-                <div class="flex justify-between"><span class="text-brand-600">Tax</span><span class="font-medium" x-text="formatPrice(tax)"></span></div>
-                <div class="flex justify-between"><span class="text-brand-600">Tip</span><span class="font-medium" x-text="formatPrice(Number(tip || 0))"></span></div>
-                <div x-show="fulfillment === 'delivery'" class="flex justify-between"><span class="text-brand-600">Delivery fee</span><span class="font-medium" x-text="formatPrice(deliveryFeeAmount)"></span></div>
-                <div class="flex justify-between text-lg font-semibold pt-2 border-t border-brand-200">
-                    <span class="text-brand-900">Total</span>
-                    <span class="text-accent-600" x-text="formatPrice(total)"></span>
-                </div>
-                <div x-show="paymentMethod === 'cash' && tendered !== ''" class="flex justify-between">
-                    <span class="text-brand-600">Change</span><span class="font-medium" x-text="formatPrice(Math.max(0, change))"></span>
-                </div>
-            </div>
-            <button @click="processCheckout()" :disabled="cart.length === 0 || processing"
-                    class="themed-bg w-full py-3 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-                <span x-show="!processing">Complete Sale</span>
-                <span x-show="processing" x-cloak>Processing...</span>
-            </button>
-            <button @click="saveQuote()" :disabled="cart.length === 0 || quoteSaving"
-                    class="w-full py-2 mt-2 text-sm border border-brand-300 bg-brand-100 font-medium disabled:opacity-50">
-                <span x-show="!quoteSaving">Save as quotation</span>
-                <span x-show="quoteSaving" x-cloak>Saving...</span>
-            </button>
-            <p x-show="quoteNumber" class="text-xs text-success mt-1">Quotation <span x-text="quoteNumber"></span> saved. Print the proforma from Quotations in back office.</p>
-            <p x-show="quoteError" x-text="quoteError" class="text-xs text-danger mt-1"></p>
         </div>
     </div>
 

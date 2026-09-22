@@ -260,6 +260,24 @@ body {
     color: var(--brand-accent, #2563eb);
 }
 
+/* Back-office sidebar nav: slim scrollable rail */
+.bo-nav {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #0f172a;
+}
+
+.bo-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.bo-nav::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+.bo-nav::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
 /* POS compact display mode */
 .pos-compact .p-4 {
     padding: 0.625rem;
