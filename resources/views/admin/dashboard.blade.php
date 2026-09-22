@@ -32,7 +32,7 @@
             <x-ui.card class="w-64 flex-shrink-0">
                 <div class="text-xs text-brand-600 uppercase tracking-wide mb-2">Today's Sales</div>
                 <div class="text-2xl font-bold mb-1" x-data="{ value: 0 }" x-init="$nextTick(() => value = {{ $kpi['today_sales'] ?? 0 }})">
-                    $<span x-text="value.toLocaleString()"></span>
+                    R<span x-text="Number(value).toLocaleString('en-ZA', {minimumFractionDigits: 2})"></span>
                 </div>
                 <div class="text-xs text-brand-500">
                     <span class="text-success">{{ $kpi['sales_change'] ?? '+0' }}%</span> from yesterday
@@ -70,7 +70,7 @@
             <x-ui.card class="w-64 flex-shrink-0">
                 <div class="text-xs text-brand-600 uppercase tracking-wide mb-2">Monthly Revenue</div>
                 <div class="text-2xl font-bold mb-1">
-                    $<span>{{ number_format($kpi['monthly_revenue'] ?? 0, 2) }}</span>
+                    R<span>{{ number_format($kpi['monthly_revenue'] ?? 0, 2) }}</span>
                 </div>
                 <div class="text-xs text-brand-500">
                     Current month
@@ -108,7 +108,7 @@
         <!-- Recent Activity Feed -->
         <x-ui.card>
             <h2 class="text-lg font-semibold mb-4">Live Activity Feed</h2>
-            <div class="space-y-3" x-data="activityFeed({ activities: @json($activities ?? []), branchId: {{ $branchId ?? 'null' }} })">
+            <div class="space-y-3" x-data="activityFeed({ activities: @json($activities ?? []), branchId: {{ $branchId ?? 'null' }}, feedUrl: '/api/v1/dashboard/activity' })">
                 <p x-show="activities.length === 0" class="text-center py-8 text-brand-500 text-sm">
                     No recent activity
                 </p>

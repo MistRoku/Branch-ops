@@ -55,12 +55,25 @@ class PurchaseOrderController extends Controller
 
     public function show(int $id): View
     {
-        $po = PurchaseOrder::with(['supplier', 'branch', 'items.product'])->findOrFail($id);
+        $po = PurchaseOrder::with(['supplier', 'branch', 'items.product', 'receivedBy', 'user'])->findOrFail($id);
         if (! Auth::user()->isSuperAdmin() && ! Auth::user()->canAccessBranch($po->branch_id)) {
             abort(403);
         }
 
         return view('admin.purchase-orders.show', compact('po'));
+    }
+
+    /**
+     * Printable Goods Received Voucher for a purchase order.
+     */
+    public function grv(int $id): View
+    {
+        $po = PurchaseOrder::with(['supplier', 'branch', 'items.product', 'receivedBy', 'user'])->findOrFail($id);
+        if (! Auth::user()->isSuperAdmin() && ! Auth::user()->canAccessBranch($po->branch_id)) {
+            abort(403);
+        }
+
+        return view('admin.purchase-orders.grv', compact('po'));
     }
 
     public function send(int $id): RedirectResponse
@@ -72,10 +85,15 @@ class PurchaseOrderController extends Controller
 
     public function receive(Request $request, int $id): RedirectResponse
     {
-        $validated = $request->validate(['items' => 'required|array', 'items.*.product_id' => 'required|exists:products,id', 'items.*.quantity' => 'required|integer|min:1']);
-        $this->pos->receive(PurchaseOrder::findOrFail($id), $validated['items']);
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'delivery_notes' => 'nullable|string|max:500',
+        ]);
+        $this->pos->receive(PurchaseOrder::findOrFail($id), $validated['items'], Auth::id(), $validated['delivery_notes'] ?? null);
 
-        return back()->with('success', 'Goods received');
+        return back()->with('success', 'Goods received and GRV issued');
     }
 
     public function cancel(int $id): RedirectResponse

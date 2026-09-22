@@ -3,6 +3,8 @@
 @section('content')
 <div class="bg-white border p-6 max-w-2xl"><h1 class="text-xl font-semibold">{{ $transfer->transfer_number }} — {{ $transfer->status }}</h1>
 <p class="text-sm">{{ $transfer->fromBranch?->name }} → {{ $transfer->toBranch?->name }}</p>
+<p class="text-sm text-brand-600 mt-2">Requested by {{ $transfer->createdBy?->name ?? '—' }} · Approved by {{ $transfer->approvedBy?->name ?? '—' }} @if($transfer->approved_at) on {{ $transfer->approved_at->format('Y-m-d H:i') }} @endif · Received by {{ $transfer->receivedBy?->name ?? '—' }} @if($transfer->received_at) on {{ $transfer->received_at->format('Y-m-d H:i') }} @endif</p>
+@if($transfer->rejection_reason)<p class="text-sm text-danger mt-1">Rejected: {{ $transfer->rejection_reason }}</p>@endif
 <ul class="text-sm mt-4">@foreach($transfer->items as $it)<li>{{ $it->product?->name }}: req {{ $it->quantity_requested }}, recv {{ $it->quantity_received }}</li>@endforeach</ul>
 <div class="flex gap-2 mt-6">
 @if($transfer->canBeApproved())<form method="POST" action="{{ route('admin.transfers.approve', $transfer) }}">@csrf @method('PUT')<button class="px-3 py-1 border text-sm">Approve</button></form>@endif

@@ -15,7 +15,9 @@ class PurchaseOrder extends Model
         'branch_id',
         'supplier_id',
         'user_id',
+        'received_by',
         'po_number',
+        'grv_number',
         'status',
         'expected_delivery_date',
         'received_at',
@@ -23,6 +25,7 @@ class PurchaseOrder extends Model
         'tax_amount',
         'total_amount',
         'notes',
+        'delivery_notes',
     ];
 
     protected $casts = [
@@ -56,6 +59,11 @@ class PurchaseOrder extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function receivedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'received_by');
     }
 
     public function items(): HasMany

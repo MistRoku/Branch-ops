@@ -1,19 +1,24 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SaleController as AdminSaleController;
 use App\Http\Controllers\Admin\SearchPageController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SpecialController as AdminSpecialController;
 use App\Http\Controllers\Admin\StockTakeController;
 use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
 use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\WasteController as AdminWasteController;
 use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +41,69 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sales History + Refunds (branch scoped in controller)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('sales')->name('admin.sales.')->group(function () {
+        Route::get('/', [AdminSaleController::class, 'index'])->name('index');
+        Route::get('/refunds', [AdminSaleController::class, 'refunds'])->name('refunds');
+        Route::get('/{id}', [AdminSaleController::class, 'show'])->name('show');
+        Route::get('/{id}/receipt', [AdminSaleController::class, 'receipt'])->name('receipt');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Specials Management (managers and super admins)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('specials')->name('admin.specials.')->middleware('role:super_admin,branch_manager')->group(function () {
+        Route::get('/', [AdminSpecialController::class, 'index'])->name('index');
+        Route::get('/create', [AdminSpecialController::class, 'create'])->name('create');
+        Route::post('/', [AdminSpecialController::class, 'store'])->name('store');
+        Route::put('/{id}/toggle', [AdminSpecialController::class, 'toggle'])->name('toggle');
+        Route::delete('/{id}', [AdminSpecialController::class, 'destroy'])->name('destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Coupons + Vouchers (managers and super admins)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('coupons')->name('admin.coupons.')->middleware('role:super_admin,branch_manager')->group(function () {
+        Route::get('/', [AdminCouponController::class, 'index'])->name('index');
+        Route::get('/create', [AdminCouponController::class, 'create'])->name('create');
+        Route::post('/', [AdminCouponController::class, 'store'])->name('store');
+        Route::put('/{id}/toggle', [AdminCouponController::class, 'toggle'])->name('toggle');
+        Route::delete('/{id}', [AdminCouponController::class, 'destroy'])->name('destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payouts (all staff can log, managers approve)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('payouts')->name('admin.payouts.')->group(function () {
+        Route::get('/', [AdminPayoutController::class, 'index'])->name('index');
+        Route::get('/create', [AdminPayoutController::class, 'create'])->name('create');
+        Route::post('/', [AdminPayoutController::class, 'store'])->name('store');
+        Route::put('/{id}/approve', [AdminPayoutController::class, 'approve'])->name('approve')->middleware('role:super_admin,branch_manager');
+        Route::put('/{id}/reject', [AdminPayoutController::class, 'reject'])->name('reject')->middleware('role:super_admin,branch_manager');
+        Route::put('/{id}/pay', [AdminPayoutController::class, 'markPaid'])->name('pay')->middleware('role:super_admin,branch_manager');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Waste Management Logging
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('waste')->name('admin.waste.')->group(function () {
+        Route::get('/', [AdminWasteController::class, 'index'])->name('index');
+        Route::get('/create', [AdminWasteController::class, 'create'])->name('create');
+        Route::post('/', [AdminWasteController::class, 'store'])->name('store');
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -127,6 +195,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('receive');
         Route::put('/{id}/send', [PurchaseOrderController::class, 'send'])->name('send');
         Route::post('/{id}/receive', [PurchaseOrderController::class, 'receive'])->name('receive.store');
+        Route::get('/{id}/grv', [PurchaseOrderController::class, 'grv'])->name('grv');
         Route::put('/{id}/cancel', [PurchaseOrderController::class, 'cancel'])->name('cancel');
     });
 
@@ -196,6 +265,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');
         Route::put('/profile', [SettingsController::class, 'updateProfile'])->name('profile');
         Route::put('/password', [SettingsController::class, 'changePassword'])->name('password');
+        Route::put('/branch', [SettingsController::class, 'updateBranch'])->name('branch');
     });
 
     Route::get('/search', [SearchPageController::class, 'index'])->name('admin.search');

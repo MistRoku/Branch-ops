@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // can resolve the logged-in web user. Without this every POS API
         // call returns 401 even with a valid session cookie.
         $middleware->statefulApi();
+        $middleware->alias(['role' => \App\Http\Middleware\EnsureRole::class]);
         $middleware->append(AddSecurityHeaders::class);
         $middleware->appendToGroup('web', EnsureUserIsActive::class);
         $middleware->appendToGroup('api', EnsureUserIsActive::class);

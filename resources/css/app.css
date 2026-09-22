@@ -249,3 +249,23 @@ body {
 .bg-gray-100 {
     background-color: #f1f5f9 !important;
 }
+
+/* POS compact display mode */
+.pos-compact .p-4 {
+    padding: 0.625rem;
+}
+
+/* Print: receipts and vouchers print cleanly on their own */
+@media print {
+    aside,
+    header,
+    footer,
+    .toolbar,
+    #connection-status {
+        display: none !important;
+    }
+
+    main {
+        overflow: visible !important;
+    }
+}

@@ -44,7 +44,12 @@ class SalesController extends Controller
         $validated = $request->validate([
             'branch_id' => 'nullable|exists:branches,id',
             'payment_method' => 'required|in:cash,card,mobile,credit',
+            'payment_reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
+            'tip_amount' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'tendered_amount' => 'nullable|numeric|min:0',
+            'coupon_code' => 'nullable|string|max:50',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -89,7 +94,28 @@ class SalesController extends Controller
                     ];
                 }
 
-                $total = $subtotal + $taxTotal;
+                // Coupon discount (validated against minimum spend, dates, usage)
+                $couponDiscount = 0;
+                $couponCode = $validated['coupon_code'] ?? null;
+                $coupon = null;
+                if ($couponCode) {
+                    $coupon = \App\Models\Coupon::where('code', $couponCode)->active()->first();
+                    if (! $coupon || ! $coupon->isUsableFor($subtotal)) {
+                        throw new \Exception('Coupon code is not valid for this sale.');
+                    }
+                    $couponDiscount = $coupon->discountFor($subtotal);
+                }
+
+                $manualDiscount = (float) ($validated['discount_amount'] ?? 0);
+                $discount = round(min($manualDiscount + $couponDiscount, $subtotal), 2);
+                $tip = round((float) ($validated['tip_amount'] ?? 0), 2);
+                $total = round($subtotal - $discount + $taxTotal + $tip, 2);
+
+                $tendered = isset($validated['tendered_amount']) ? (float) $validated['tendered_amount'] : null;
+                if ($tendered !== null && $tendered < $total) {
+                    throw new \Exception('Tendered amount is less than the sale total.');
+                }
+                $change = $tendered !== null ? round($tendered - $total, 2) : 0;
 
                 // Columns match the sales table: subtotal / tax_amount /
                 // discount_amount / total_amount (there is no `total` column).
@@ -98,14 +124,21 @@ class SalesController extends Controller
                     'user_id' => $user->id,
                     'invoice_number' => Sale::generateInvoiceNumber($branchId),
                     'payment_method' => $validated['payment_method'],
+                    'payment_reference' => $validated['payment_reference'] ?? null,
                     'subtotal' => $subtotal,
                     'tax_amount' => $taxTotal,
-                    'discount_amount' => 0,
+                    'discount_amount' => $discount,
+                    'tip_amount' => $tip,
+                    'tendered_amount' => $tendered,
+                    'change_amount' => $change,
                     'total_amount' => $total,
+                    'coupon_code' => $coupon?->code,
                     'notes' => $validated['notes'] ?? null,
                     'status' => 'completed',
                     'completed_at' => now(),
                 ]);
+
+                $coupon?->increment('used_count');
 
                 foreach ($lines as $line) {
                     SaleItem::create([
@@ -183,9 +216,9 @@ class SalesController extends Controller
             $query->where('payment_method', $request->payment_method);
         }
 
-        // Filter by payment status
-        if ($request->has('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+        // Filter by payment status (maps to the sales status column)
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
         }
 
         // Branch scoping for non-super-admin users
@@ -307,5 +340,119 @@ class SalesController extends Controller
                 'daily_last_7_days' => $dailySales,
             ],
         ]);
+    }
+
+    /**
+     * Refund a sale (full or partial). Amounts of R100 or more require a
+     * manager or super admin; smaller refunds can be done by counter staff.
+     */
+    public function refund(Request $request, int $id): JsonResponse
+    {
+        $user = Auth::user();
+        $sale = Sale::with('items')->findOrFail($id);
+
+        if (! $user->isSuperAdmin() && ! $user->canAccessBranch($sale->branch_id)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this sale'], 403);
+        }
+        if ($sale->status !== Sale::STATUS_COMPLETED) {
+            return response()->json(['success' => false, 'message' => 'Only completed sales can be refunded'], 422);
+        }
+
+        $validated = $request->validate([
+            'type' => 'nullable|in:full,partial',
+            'amount' => 'nullable|numeric|min:0.01',
+            'reason' => 'required|string|max:500',
+            'payment_method' => 'nullable|in:cash,card,original',
+        ]);
+
+        $type = $validated['type'] ?? 'full';
+        $alreadyRefunded = (float) \App\Models\SaleRefund::where('sale_id', $sale->id)
+            ->where('status', \App\Models\SaleRefund::STATUS_COMPLETED)->sum('refund_amount');
+        $amount = $type === 'full' ? (float) $sale->total_amount - $alreadyRefunded : (float) ($validated['amount'] ?? 0);
+
+        if ($amount <= 0 || $amount > (float) $sale->total_amount - $alreadyRefunded) {
+            return response()->json(['success' => false, 'message' => 'Refund amount exceeds the refundable balance'], 422);
+        }
+        if ($amount >= 100 && ! $user->isSuperAdmin() && ! $user->isBranchManager()) {
+            return response()->json(['success' => false, 'message' => 'Refunds of R100 or more require a manager'], 403);
+        }
+
+        try {
+            $refund = DB::transaction(function () use ($sale, $user, $type, $amount, $validated, $alreadyRefunded) {
+                if ($type === 'full') {
+                    foreach ($sale->items as $item) {
+                        $this->inventory->adjustStock(
+                            $item->product_id, $sale->branch_id, $item->quantity,
+                            "Refund {$sale->invoice_number}", 'refund', $sale->id
+                        );
+                    }
+                }
+
+                $refund = \App\Models\SaleRefund::create([
+                    'sale_id' => $sale->id,
+                    'branch_id' => $sale->branch_id,
+                    'user_id' => $user->id,
+                    'refund_type' => $type,
+                    'refund_amount' => $amount,
+                    'refund_reason' => $validated['reason'],
+                    'status' => \App\Models\SaleRefund::STATUS_COMPLETED,
+                    'payment_method' => $validated['payment_method'] ?? 'original',
+                    'cash_drawer_id' => $sale->cash_drawer_id,
+                ]);
+
+                if ($alreadyRefunded + $amount >= (float) $sale->total_amount) {
+                    $sale->update(['status' => Sale::STATUS_REFUNDED]);
+                }
+
+                return $refund;
+            });
+
+            return response()->json(['success' => true, 'data' => $refund->load(['sale', 'user']), 'message' => 'Refund recorded'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to record refund: '.$e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Void a completed sale. Managers and super admins only; stock is
+     * restored and the void is tracked with reason, actor and timestamp.
+     */
+    public function void(Request $request, int $id): JsonResponse
+    {
+        $user = Auth::user();
+        $sale = Sale::with('items')->findOrFail($id);
+
+        if (! $user->isSuperAdmin() && ! $user->isBranchManager()) {
+            return response()->json(['success' => false, 'message' => 'Only managers can void sales'], 403);
+        }
+        if (! $user->isSuperAdmin() && ! $user->canAccessBranch($sale->branch_id)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this sale'], 403);
+        }
+        if ($sale->status !== Sale::STATUS_COMPLETED) {
+            return response()->json(['success' => false, 'message' => 'Only completed sales can be voided'], 422);
+        }
+
+        $validated = $request->validate(['reason' => 'required|string|max:500']);
+
+        try {
+            DB::transaction(function () use ($sale, $user, $validated) {
+                foreach ($sale->items as $item) {
+                    $this->inventory->adjustStock(
+                        $item->product_id, $sale->branch_id, $item->quantity,
+                        "Void {$sale->invoice_number}", 'void', $sale->id
+                    );
+                }
+                $sale->update([
+                    'status' => Sale::STATUS_VOID,
+                    'void_reason' => $validated['reason'],
+                    'voided_by' => $user->id,
+                    'voided_at' => now(),
+                ]);
+            });
+
+            return response()->json(['success' => true, 'data' => $sale->fresh(['items.product', 'branch', 'user']), 'message' => 'Sale voided']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to void sale: '.$e->getMessage()], 500);
+        }
     }
 }

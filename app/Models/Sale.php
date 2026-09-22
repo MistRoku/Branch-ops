@@ -20,19 +20,30 @@ class Sale extends Model
         'subtotal',
         'tax_amount',
         'discount_amount',
+        'tip_amount',
+        'tendered_amount',
+        'change_amount',
         'total_amount',
         'payment_method',
         'payment_reference',
+        'coupon_code',
         'notes',
         'completed_at',
+        'void_reason',
+        'voided_by',
+        'voided_at',
     ];
 
     protected $casts = [
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'tip_amount' => 'decimal:2',
+        'tendered_amount' => 'decimal:2',
+        'change_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'completed_at' => 'datetime',
+        'voided_at' => 'datetime',
     ];
 
     const STATUS_COMPLETED = 'completed';
@@ -54,6 +65,16 @@ class Sale extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(SaleRefund::class);
+    }
+
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by');
     }
 
     public function stockMovements(): HasMany

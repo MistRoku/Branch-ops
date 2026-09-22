@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\SalesController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SupplierController;
@@ -102,6 +103,22 @@ $registerProtectedApiRoutes = function () {
     |--------------------------------------------------------------------------
     */
     Route::get('/search', [SearchController::class, 'index']);  // Global search
+
+    /*
+    |--------------------------------------------------------------------------
+    | Promotion Routes (specials + coupons for the POS)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/specials/active', [PromotionController::class, 'specials']);
+    Route::post('/coupons/validate', [PromotionController::class, 'validateCoupon']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sale Refund + Void Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/sales/{id}/refund', [SalesController::class, 'refund']);
+    Route::post('/sales/{id}/void', [SalesController::class, 'void']);
 };
 
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group($registerProtectedApiRoutes);

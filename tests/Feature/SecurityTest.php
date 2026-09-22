@@ -92,9 +92,9 @@ class SecurityTest extends TestCase
 
         $response->assertOk();
         // Staff should not see cost_price in the response
-        $response->assertJsonMissingPath('data.0.cost_price');
+        $response->assertJsonMissingPath('data.data.0.cost_price');
         // Staff should see selling_price
-        $response->assertJsonPath('data.0.selling_price', 20.00);
+        $response->assertJsonPath('data.data.0.selling_price', '20.00');
     }
 
     /**
@@ -134,7 +134,7 @@ class SecurityTest extends TestCase
 
         $response->assertOk();
         // Manager should see cost_price
-        $response->assertJsonPath('data.0.cost_price', 15.00);
+        $response->assertJsonPath('data.data.0.cost_price', '15.00');
     }
 
     /**
@@ -228,7 +228,7 @@ class SecurityTest extends TestCase
 
         $response->assertOk();
         // Manager should only see products from their branch
-        $response->assertJsonCount(1, 'data');
+        $response->assertJsonCount(1, 'data.data');
     }
 
     /**
@@ -282,7 +282,7 @@ class SecurityTest extends TestCase
 
         $response->assertOk();
         // Super admin should see all products
-        $response->assertJsonCount(2, 'data');
+        $response->assertJsonCount(2, 'data.data');
     }
 
     /**
@@ -410,7 +410,7 @@ class SecurityTest extends TestCase
 
         $response->assertOk();
         // Staff should not see products from other branches
-        $response->assertJsonCount(0, 'data');
+        $response->assertJsonCount(0, 'data.data');
     }
 
     /**

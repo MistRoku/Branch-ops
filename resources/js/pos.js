@@ -1,10 +1,12 @@
 import { http, errorMessage } from './http';
 import { formatPrice } from './format';
 
+const THEME_KEY = 'branchops-pos-theme';
+
 /**
- * POS terminal state. Product field names match the API shape:
- * `selling_price` for money and summed `stock_levels[].quantity` for
- * availability (there is no `price`, `stock_quantity` or `category`).
+ * POS terminal state. Prices honor active specials, quantities stay
+ * approximate on purpose: exact branch stock is back-office only, the
+ * terminal shows availability status instead of numbers.
  */
 export function posTerminal({ branchId = null } = {}) {
     return {
@@ -19,33 +21,109 @@ export function posTerminal({ branchId = null } = {}) {
         showSuccessModal: false,
         lastSaleId: '',
         lastSaleTotal: 0,
+        lastSaleDbId: null,
+
+        paymentMethod: 'cash',
+        paymentReference: '',
+        tendered: '',
+        tip: 0,
+        couponCode: '',
+        couponDiscount: 0,
+        couponError: '',
+        couponApplied: '',
+        specials: {},
+
+        showHistory: false,
+        pastSales: [],
+        historyLoading: false,
+        historyError: '',
+        selectedSale: null,
+        saleDetailLoading: false,
+        refundType: 'full',
+        refundAmount: '',
+        refundReason: '',
+        refundError: '',
+        refunding: false,
+        voidReason: '',
+        voidError: '',
+        voiding: false,
+
+        accent: 'blue',
+        compact: false,
 
         get subtotal() {
             return this.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
         },
 
         get tax() {
-            return this.subtotal * 0.1;
+            return this.cart.reduce((sum, item) => {
+                const rate = Number(item.taxRate) || 0;
+                return sum + item.price * item.quantity * (rate / 100);
+            }, 0);
+        },
+
+        get discount() {
+            return Math.min(this.couponDiscount, this.subtotal);
         },
 
         get total() {
-            return this.subtotal + this.tax;
+            return Math.max(0, this.subtotal - this.discount + this.tax + Number(this.tip || 0));
+        },
+
+        get change() {
+            const tendered = parseFloat(this.tendered);
+            if (Number.isNaN(tendered)) {
+                return 0;
+            }
+            return tendered - this.total;
         },
 
         get cartCount() {
             return this.cart.reduce((sum, item) => sum + item.quantity, 0);
         },
 
+        get accentButton() {
+            return {
+                blue: 'bg-accent-500 text-white',
+                slate: 'bg-brand-900 text-white',
+                green: 'bg-success text-white',
+            }[this.accent] ?? 'bg-accent-500 text-white';
+        },
+
         formatPrice,
-        _loadingPromise: null,
+
+        availability(product) {
+            if (product.stock <= 0) {
+                return 'Out of stock';
+            }
+            if (product.stock <= (product.reorder ?? 10)) {
+                return 'Low stock';
+            }
+            return 'In stock';
+        },
 
         async init() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(THEME_KEY) ?? '{}');
+                if (saved.accent) {
+                    this.accent = saved.accent;
+                }
+                this.compact = !!saved.compact;
+            } catch {
+                // Default theme stands.
+            }
             await this.loadProducts();
         },
 
+        saveTheme() {
+            try {
+                localStorage.setItem(THEME_KEY, JSON.stringify({ accent: this.accent, compact: this.compact }));
+            } catch {
+                // Customisation is best-effort.
+            }
+        },
+
         async loadProducts() {
-            // Ignore duplicate calls while a load is already in flight so a
-            // slow network plus repeated clicks cannot stack up requests.
             if (this._loadingPromise) {
                 return this._loadingPromise;
             }
@@ -61,13 +139,27 @@ export function posTerminal({ branchId = null } = {}) {
             this.loading = true;
             this.loadError = '';
             try {
-                const { data } = await http.get('/api/v1/products', { params: { per_page: 100 } });
+                const [productsRes, specialsRes] = await Promise.all([
+                    http.get('/api/v1/products', { params: { per_page: 100 } }),
+                    http.get('/api/v1/specials/active', { params: branchId ? { branch_id: branchId } : {} }),
+                ]);
+                const data = productsRes.data;
                 const list = data?.data?.data ?? data?.data ?? [];
-                this.products = list.map((p) => ({
-                    ...p,
-                    unitPrice: Number(p.selling_price) || 0,
-                    stock: (p.stock_levels ?? []).reduce((sum, level) => sum + (Number(level.quantity) || 0), 0),
-                }));
+                const specials = specialsRes.data?.data ?? {};
+                this.specials = specials;
+                this.products = list.map((p) => {
+                    const special = specials[p.id];
+                    const unitPrice = special ? Number(special.price) : Number(p.selling_price) || 0;
+                    return {
+                        ...p,
+                        unitPrice,
+                        onSpecial: !!special,
+                        taxRate: Number(p.tax_rate) || 0,
+                        reorder: Number(p.reorder_level) || 10,
+                        uom: p.unit_of_measure ?? 'piece',
+                        stock: (p.stock_levels ?? []).reduce((sum, level) => sum + (Number(level.quantity) || 0), 0),
+                    };
+                });
                 this.filteredProducts = this.products;
             } catch (error) {
                 this.loadError = errorMessage(error, 'Failed to load products.');
@@ -99,7 +191,7 @@ export function posTerminal({ branchId = null } = {}) {
             const existing = this.cart.find((item) => item.product_id === product.id);
             const inCart = existing?.quantity ?? 0;
             if (inCart + 1 > product.stock) {
-                this.checkoutError = `Only ${product.stock} × ${product.name} available.`;
+                this.checkoutError = `Only a few ${product.name} left in stock.`;
                 return;
             }
 
@@ -111,6 +203,8 @@ export function posTerminal({ branchId = null } = {}) {
                     product_id: product.id,
                     product_name: product.name,
                     price: product.unitPrice,
+                    taxRate: product.taxRate,
+                    uom: product.uom,
                     quantity: 1,
                 });
             }
@@ -124,7 +218,7 @@ export function posTerminal({ branchId = null } = {}) {
             const item = this.cart[index];
             const product = this.products.find((p) => p.id === item.product_id);
             if (product && item.quantity + 1 > product.stock) {
-                this.checkoutError = `Only ${product.stock} × ${product.name} available.`;
+                this.checkoutError = `Only a few ${product.name} left in stock.`;
                 return;
             }
             item.quantity += 1;
@@ -138,7 +232,34 @@ export function posTerminal({ branchId = null } = {}) {
             }
         },
 
-        async processCheckout(paymentMethod = 'cash') {
+        async applyCoupon() {
+            const code = this.couponCode.trim();
+            if (!code) {
+                return;
+            }
+            this.couponError = '';
+            try {
+                const { data } = await http.post('/api/v1/coupons/validate', {
+                    code,
+                    subtotal: this.subtotal,
+                });
+                this.couponDiscount = Number(data?.data?.discount) || 0;
+                this.couponApplied = data?.data?.code ?? code;
+            } catch (error) {
+                this.couponDiscount = 0;
+                this.couponApplied = '';
+                this.couponError = errorMessage(error, 'Coupon code is not valid for this sale.');
+            }
+        },
+
+        removeCoupon() {
+            this.couponCode = '';
+            this.couponDiscount = 0;
+            this.couponApplied = '';
+            this.couponError = '';
+        },
+
+        async processCheckout() {
             if (this.cart.length === 0 || this.processing) {
                 return;
             }
@@ -146,17 +267,31 @@ export function posTerminal({ branchId = null } = {}) {
             this.processing = true;
             this.checkoutError = '';
             try {
-                const { data } = await http.post('/api/v1/sales', {
+                const payload = {
                     ...(branchId ? { branch_id: branchId } : {}),
-                    payment_method: paymentMethod,
+                    payment_method: this.paymentMethod,
                     items: this.cart.map((item) => ({
                         product_id: item.product_id,
                         quantity: item.quantity,
                         price: item.price,
                     })),
-                });
-                this.lastSaleId = data?.data?.id ?? 'N/A';
-                this.lastSaleTotal = this.total;
+                };
+                if (this.paymentReference.trim()) {
+                    payload.payment_reference = this.paymentReference.trim();
+                }
+                if (Number(this.tip) > 0) {
+                    payload.tip_amount = Number(this.tip);
+                }
+                if (this.couponApplied) {
+                    payload.coupon_code = this.couponApplied;
+                }
+                if (this.paymentMethod === 'cash' && this.tendered !== '') {
+                    payload.tendered_amount = Number(this.tendered);
+                }
+                const { data } = await http.post('/api/v1/sales', payload);
+                this.lastSaleId = data?.data?.invoice_number ?? data?.data?.id ?? 'N/A';
+                this.lastSaleDbId = data?.data?.id ?? null;
+                this.lastSaleTotal = Number(data?.data?.total_amount) || this.total;
                 this.showSuccessModal = true;
             } catch (error) {
                 this.checkoutError = errorMessage(error, 'Failed to complete sale. Please try again.');
@@ -165,9 +300,104 @@ export function posTerminal({ branchId = null } = {}) {
             }
         },
 
+        printReceipt() {
+            if (this.lastSaleDbId) {
+                window.open(`/admin/sales/${this.lastSaleDbId}/receipt`, '_blank');
+            }
+        },
+
+        printReceiptFor(id) {
+            window.open(`/admin/sales/${id}/receipt`, '_blank');
+        },
+
         clearCart() {
             this.cart = [];
             this.checkoutError = '';
+            this.tendered = '';
+            this.tip = 0;
+            this.paymentReference = '';
+            this.removeCoupon();
+        },
+
+        async openHistory() {
+            this.showHistory = true;
+            await this.loadSales();
+        },
+
+        async loadSales() {
+            this.historyLoading = true;
+            this.historyError = '';
+            try {
+                const { data } = await http.get('/api/v1/sales', { params: { per_page: 20 } });
+                this.pastSales = data?.data?.data ?? data?.data ?? [];
+            } catch (error) {
+                this.historyError = errorMessage(error, 'Failed to load past sales.');
+            } finally {
+                this.historyLoading = false;
+            }
+        },
+
+        async viewSale(id) {
+            this.saleDetailLoading = true;
+            this.refundError = '';
+            this.voidError = '';
+            try {
+                const { data } = await http.get(`/api/v1/sales/${id}`);
+                this.selectedSale = data?.data ?? null;
+            } catch (error) {
+                this.historyError = errorMessage(error, 'Failed to load sale.');
+            } finally {
+                this.saleDetailLoading = false;
+            }
+        },
+
+        closeSaleDetail() {
+            this.selectedSale = null;
+            this.refundAmount = '';
+            this.refundReason = '';
+            this.refundError = '';
+            this.voidReason = '';
+            this.voidError = '';
+        },
+
+        async submitRefund() {
+            if (!this.selectedSale || this.refunding) {
+                return;
+            }
+            this.refunding = true;
+            this.refundError = '';
+            try {
+                const payload = { type: this.refundType, reason: this.refundReason };
+                if (this.refundType === 'partial') {
+                    payload.amount = Number(this.refundAmount);
+                }
+                await http.post(`/api/v1/sales/${this.selectedSale.id}/refund`, payload);
+                await this.viewSale(this.selectedSale.id);
+                await this.loadSales();
+                await this.loadProducts();
+            } catch (error) {
+                this.refundError = errorMessage(error, 'Failed to record refund.');
+            } finally {
+                this.refunding = false;
+            }
+        },
+
+        async submitVoid() {
+            if (!this.selectedSale || this.voiding) {
+                return;
+            }
+            this.voiding = true;
+            this.voidError = '';
+            try {
+                await http.post(`/api/v1/sales/${this.selectedSale.id}/void`, { reason: this.voidReason });
+                await this.viewSale(this.selectedSale.id);
+                await this.loadSales();
+                await this.loadProducts();
+            } catch (error) {
+                this.voidError = errorMessage(error, 'Failed to void sale.');
+            } finally {
+                this.voiding = false;
+            }
         },
     };
 }

@@ -18,11 +18,15 @@ class Branch extends Model
         'email',
         'is_active',
         'settings',
+        'tax_rate',
+        'receipt_header',
+        'receipt_footer',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'settings' => 'array',
+        'tax_rate' => 'decimal:2',
     ];
 
     public function users(): HasMany

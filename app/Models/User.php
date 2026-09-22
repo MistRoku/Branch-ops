@@ -22,6 +22,12 @@ class User extends Authenticatable
         'is_active',
         'failed_login_attempts',
         'locked_until',
+        'phone',
+        'id_number',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relation',
+        'notes',
     ];
 
     protected $hidden = [

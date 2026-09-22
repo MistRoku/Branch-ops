@@ -68,6 +68,12 @@ class UserController extends Controller
             'role' => ['required', Rule::in([User::ROLE_SUPER_ADMIN, User::ROLE_BRANCH_MANAGER, User::ROLE_STAFF])],
             'branch_id' => 'nullable|exists:branches,id',
             'is_active' => 'boolean',
+            'phone' => 'nullable|string|max:30',
+            'id_number' => 'nullable|string|max:50',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:30',
+            'emergency_contact_relation' => 'nullable|string|max:50',
+            'notes' => 'nullable|string',
         ]);
 
         // Non-super-admin roles require a branch
@@ -109,6 +115,12 @@ class UserController extends Controller
             'role' => ['nullable', Rule::in([User::ROLE_SUPER_ADMIN, User::ROLE_BRANCH_MANAGER, User::ROLE_STAFF])],
             'branch_id' => 'nullable|exists:branches,id',
             'is_active' => 'boolean',
+            'phone' => 'nullable|string|max:30',
+            'id_number' => 'nullable|string|max:50',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:30',
+            'emergency_contact_relation' => 'nullable|string|max:50',
+            'notes' => 'nullable|string',
         ]);
 
         if (empty($validated['password'])) {

@@ -61,7 +61,7 @@ class DashboardController extends Controller
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->sum('total');
+            ->sum('total_amount');
 
         $lowStockItems = StockLevel::with(['product', 'branch'])
             ->join('products', 'products.id', '=', 'stock_levels.product_id')
@@ -82,11 +82,11 @@ class DashboardController extends Controller
 
         $lowStockCount = StockLevel::join('products', 'products.id', '=', 'stock_levels.product_id')
             ->whereColumn('stock_levels.quantity', '<=', 'products.reorder_level')
-            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->when($branchId, fn ($q) => $q->where('stock_levels.branch_id', $branchId))
             ->count();
 
         $activeTransfers = StockTransfer::whereIn('status', ['pending', 'approved', 'in_transit'])
-            ->when($branchId, fn ($q) => $q->where('from_branch_id', $branchId)->orWhere('to_branch_id', $branchId))
+            ->when($branchId, fn ($q) => $q->where(fn ($sq) => $sq->where('from_branch_id', $branchId)->orWhere('to_branch_id', $branchId)))
             ->count();
 
         $totalProducts = Product::where('is_active', true)->count();
@@ -117,7 +117,7 @@ class DashboardController extends Controller
             ->map(fn ($sale) => [
                 'id' => "sale_{$sale->id}",
                 'type' => 'sale',
-                'message' => "Sale #{$sale->id} — R ".number_format($sale->total, 2),
+                'message' => "Sale {$sale->invoice_number} - R ".number_format((float) $sale->total_amount, 2)." at ".($sale->branch?->name ?? 'branch'),
                 'time' => $sale->created_at->diffForHumans(),
             ]);
 

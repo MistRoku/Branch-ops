@@ -12,9 +12,9 @@ class EnsureUserIsActive
     {
         $user = $request->user();
 
-        if ($user && ! $user->is_active) {
+        if ($user && (! $user->is_active || $user->isLocked())) {
             if ($request->is('api/*') || $request->expectsJson()) {
-                abort(403, 'Account deactivated');
+                abort(403, $user->isLocked() ? 'Account locked. Try again later.' : 'Account deactivated');
             }
 
             auth()->guard('web')->logout();

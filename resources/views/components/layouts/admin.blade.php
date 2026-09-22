@@ -66,6 +66,31 @@
                         </a>
                     </li>
                     <li>
+                        <a href="/admin/sales" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/sales*') ? 'bg-brand-800' : '' }}">
+                            Sales History
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/specials" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/specials*') ? 'bg-brand-800' : '' }}">
+                            Specials
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/coupons" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/coupons*') ? 'bg-brand-800' : '' }}">
+                            Coupons
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/payouts" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/payouts*') ? 'bg-brand-800' : '' }}">
+                            Payouts
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/waste" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/waste*') ? 'bg-brand-800' : '' }}">
+                            Waste Log
+                        </a>
+                    </li>
+                    <li>
                         <a href="/admin/users" class="block px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/users*') ? 'bg-brand-800' : '' }}">
                             Users
                         </a>
