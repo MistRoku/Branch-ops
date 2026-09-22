@@ -41,7 +41,7 @@
             <!-- Right Side Actions -->
             <div class="flex items-center gap-4">
                 <!-- Back Office Button -->
-                @if(auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager')
+                @if(auth()->user()?->isSuperAdmin() || auth()->user()?->isBranchManager())
                 <a href="{{ route('admin.dashboard') }}"
                    class="inline-flex items-center gap-2 px-4 py-2 bg-brand-900 text-white text-sm font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">

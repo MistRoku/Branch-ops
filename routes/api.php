@@ -31,9 +31,11 @@ Route::middleware(['throttle:api'])->group(function () {
     });
 });
 
-// Protected API routes (authentication required)
-Route::middleware(['auth:sanctum'])->group(function () {
-
+// Protected API routes (authentication required).
+// Canonical paths are /api/v1/* (per README, POS frontend and SecurityTest).
+// Unprefixed /api/* aliases are kept for older callers (SaleCheckoutTest,
+// PermissionMatrixTest) so both work regardless of which base the client uses.
+$registerProtectedApiRoutes = function () {
     /*
     |--------------------------------------------------------------------------
     | Dashboard Routes
@@ -50,10 +52,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']);           // List products
         Route::post('/', [ProductController::class, 'store']);          // Create product
+        Route::get('/low-stock', [ProductController::class, 'lowStock']); // Low stock alert
         Route::get('/{id}', [ProductController::class, 'show']);        // Get product
         Route::put('/{id}', [ProductController::class, 'update']);      // Update product
         Route::delete('/{id}', [ProductController::class, 'destroy']);  // Delete product
-        Route::get('/low-stock', [ProductController::class, 'lowStock']); // Low stock alert
     });
 
     /*
@@ -90,8 +92,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('sales')->group(function () {
         Route::get('/', [SalesController::class, 'index']);           // List sales
         Route::post('/', [SalesController::class, 'store']);          // Record sale
-        Route::get('/{id}', [SalesController::class, 'show']);        // Get sale
         Route::get('/stats', [SalesController::class, 'stats']);      // Sales statistics
+        Route::get('/{id}', [SalesController::class, 'show']);        // Get sale
     });
 
     /*
@@ -100,4 +102,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('/search', [SearchController::class, 'index']);  // Global search
-});
+};
+
+Route::middleware(['auth:sanctum'])->group($registerProtectedApiRoutes);
+Route::middleware(['auth:sanctum'])->prefix('v1')->group($registerProtectedApiRoutes);
