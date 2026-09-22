@@ -2,13 +2,16 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\GoodsReceivedController as AdminGoodsReceivedController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\QuoteController as AdminQuoteController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SaleController as AdminSaleController;
 use App\Http\Controllers\Admin\SearchPageController;
@@ -103,6 +106,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [AdminWasteController::class, 'index'])->name('index');
         Route::get('/create', [AdminWasteController::class, 'create'])->name('create');
         Route::post('/', [AdminWasteController::class, 'store'])->name('store');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customers (retention)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('customers')->name('admin.customers.')->group(function () {
+        Route::get('/', [AdminCustomerController::class, 'index'])->name('index');
+        Route::post('/', [AdminCustomerController::class, 'store'])->name('store');
+        Route::get('/{id}', [AdminCustomerController::class, 'show'])->name('show');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quotations + Proforma Invoices
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('quotes')->name('admin.quotes.')->group(function () {
+        Route::get('/', [AdminQuoteController::class, 'index'])->name('index');
+        Route::get('/{id}', [AdminQuoteController::class, 'show'])->name('show');
+        Route::get('/{id}/proforma', [AdminQuoteController::class, 'proforma'])->name('proforma');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | GRV Register (goods received vouchers)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('grv')->name('admin.grv.')->group(function () {
+        Route::get('/', [AdminGoodsReceivedController::class, 'index'])->name('index');
     });
 
     /*

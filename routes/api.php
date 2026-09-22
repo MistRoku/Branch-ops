@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\PromotionController;
+use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\SalesController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SupplierController;
@@ -111,6 +113,28 @@ $registerProtectedApiRoutes = function () {
     */
     Route::get('/specials/active', [PromotionController::class, 'specials']);
     Route::post('/coupons/validate', [PromotionController::class, 'validateCoupon']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Routes (retention at the till)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('customers')->group(function () {
+        Route::get('/', [CustomerController::class, 'index']);
+        Route::post('/', [CustomerController::class, 'store']);
+        Route::get('/{id}', [CustomerController::class, 'show']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quotation Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('quotes')->group(function () {
+        Route::post('/', [QuoteController::class, 'store']);
+        Route::get('/{id}', [QuoteController::class, 'show']);
+        Route::post('/{id}/convert', [QuoteController::class, 'convert']);
+    });
 
     /*
     |--------------------------------------------------------------------------

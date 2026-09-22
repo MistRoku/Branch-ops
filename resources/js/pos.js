@@ -1,7 +1,7 @@
 import { http, errorMessage } from './http';
 import { formatPrice } from './format';
 
-const THEME_KEY = 'branchops-pos-theme';
+const DISPLAY_KEY = 'branchops-pos-display';
 
 /**
  * POS terminal state. Prices honor active specials, quantities stay
@@ -25,6 +25,8 @@ export function posTerminal({ branchId = null } = {}) {
 
         paymentMethod: 'cash',
         paymentReference: '',
+        splitCash: '',
+        splitCard: '',
         tendered: '',
         tip: 0,
         couponCode: '',
@@ -32,6 +34,23 @@ export function posTerminal({ branchId = null } = {}) {
         couponError: '',
         couponApplied: '',
         specials: {},
+
+        customerSearch: '',
+        customerResults: [],
+        customerSearching: false,
+        selectedCustomer: null,
+        showNewCustomer: false,
+        newCustomerName: '',
+        newCustomerPhone: '',
+        customerError: '',
+
+        fulfillment: 'pickup',
+        deliveryAddress: '',
+        deliveryFee: 0,
+
+        quoteSaving: false,
+        quoteNumber: '',
+        quoteError: '',
 
         showHistory: false,
         pastSales: [],
@@ -48,7 +67,6 @@ export function posTerminal({ branchId = null } = {}) {
         voidError: '',
         voiding: false,
 
-        accent: 'blue',
         compact: false,
 
         get subtotal() {
@@ -66,8 +84,12 @@ export function posTerminal({ branchId = null } = {}) {
             return Math.min(this.couponDiscount, this.subtotal);
         },
 
+        get deliveryFeeAmount() {
+            return this.fulfillment === 'delivery' ? Number(this.deliveryFee || 0) : 0;
+        },
+
         get total() {
-            return Math.max(0, this.subtotal - this.discount + this.tax + Number(this.tip || 0));
+            return Math.max(0, this.subtotal - this.discount + this.tax + Number(this.tip || 0) + this.deliveryFeeAmount);
         },
 
         get change() {
@@ -78,16 +100,16 @@ export function posTerminal({ branchId = null } = {}) {
             return tendered - this.total;
         },
 
-        get cartCount() {
-            return this.cart.reduce((sum, item) => sum + item.quantity, 0);
+        get splitTotal() {
+            return (Number(this.splitCash) || 0) + (Number(this.splitCard) || 0);
         },
 
-        get accentButton() {
-            return {
-                blue: 'bg-accent-500 text-white',
-                slate: 'bg-brand-900 text-white',
-                green: 'bg-success text-white',
-            }[this.accent] ?? 'bg-accent-500 text-white';
+        get splitBalanced() {
+            return Math.abs(this.splitTotal - this.total) < 0.015;
+        },
+
+        get cartCount() {
+            return this.cart.reduce((sum, item) => sum + item.quantity, 0);
         },
 
         formatPrice,
@@ -104,22 +126,19 @@ export function posTerminal({ branchId = null } = {}) {
 
         async init() {
             try {
-                const saved = JSON.parse(localStorage.getItem(THEME_KEY) ?? '{}');
-                if (saved.accent) {
-                    this.accent = saved.accent;
-                }
+                const saved = JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}');
                 this.compact = !!saved.compact;
             } catch {
-                // Default theme stands.
+                // Default display stands.
             }
             await this.loadProducts();
         },
 
-        saveTheme() {
+        saveDisplay() {
             try {
-                localStorage.setItem(THEME_KEY, JSON.stringify({ accent: this.accent, compact: this.compact }));
+                localStorage.setItem(DISPLAY_KEY, JSON.stringify({ compact: this.compact }));
             } catch {
-                // Customisation is best-effort.
+                // Display preference is best-effort.
             }
         },
 
@@ -259,8 +278,94 @@ export function posTerminal({ branchId = null } = {}) {
             this.couponError = '';
         },
 
+        async searchCustomers() {
+            const query = this.customerSearch.trim();
+            if (query.length < 2) {
+                this.customerResults = [];
+                return;
+            }
+            this.customerSearching = true;
+            try {
+                const { data } = await http.get('/api/v1/customers', { params: { search: query } });
+                this.customerResults = data?.data ?? [];
+            } catch {
+                this.customerResults = [];
+            } finally {
+                this.customerSearching = false;
+            }
+        },
+
+        async selectCustomer(customer) {
+            this.customerError = '';
+            try {
+                const { data } = await http.get(`/api/v1/customers/${customer.id}`);
+                this.selectedCustomer = data?.data ?? customer;
+            } catch {
+                this.selectedCustomer = customer;
+            }
+            this.customerResults = [];
+            this.customerSearch = '';
+        },
+
+        clearCustomer() {
+            this.selectedCustomer = null;
+        },
+
+        async createCustomer() {
+            if (!this.newCustomerName.trim()) {
+                return;
+            }
+            this.customerError = '';
+            try {
+                const { data } = await http.post('/api/v1/customers', {
+                    name: this.newCustomerName.trim(),
+                    phone: this.newCustomerPhone.trim() || null,
+                });
+                this.selectedCustomer = data?.data ?? null;
+                this.showNewCustomer = false;
+                this.newCustomerName = '';
+                this.newCustomerPhone = '';
+            } catch (error) {
+                this.customerError = errorMessage(error, 'Failed to add customer.');
+            }
+        },
+
+        async saveQuote() {
+            if (this.cart.length === 0 || this.quoteSaving) {
+                return;
+            }
+            this.quoteSaving = true;
+            this.quoteError = '';
+            this.quoteNumber = '';
+            try {
+                const { data } = await http.post('/api/v1/quotes', {
+                    ...(branchId ? { branch_id: branchId } : {}),
+                    ...(this.selectedCustomer ? { customer_id: this.selectedCustomer.id } : {}),
+                    discount_amount: this.discount,
+                    items: this.cart.map((item) => ({
+                        product_id: item.product_id,
+                        quantity: item.quantity,
+                        price: item.price,
+                    })),
+                });
+                this.quoteNumber = data?.data?.quote_number ?? '';
+            } catch (error) {
+                this.quoteError = errorMessage(error, 'Failed to save quotation.');
+            } finally {
+                this.quoteSaving = false;
+            }
+        },
+
         async processCheckout() {
             if (this.cart.length === 0 || this.processing) {
+                return;
+            }
+            if (this.paymentMethod === 'split' && !this.splitBalanced) {
+                this.checkoutError = 'Split amounts must add up to the sale total.';
+                return;
+            }
+            if (this.fulfillment === 'delivery' && !this.deliveryAddress.trim()) {
+                this.checkoutError = 'A delivery address is required for delivery orders.';
                 return;
             }
 
@@ -270,14 +375,29 @@ export function posTerminal({ branchId = null } = {}) {
                 const payload = {
                     ...(branchId ? { branch_id: branchId } : {}),
                     payment_method: this.paymentMethod,
+                    fulfillment: this.fulfillment,
                     items: this.cart.map((item) => ({
                         product_id: item.product_id,
                         quantity: item.quantity,
                         price: item.price,
                     })),
                 };
-                if (this.paymentReference.trim()) {
-                    payload.payment_reference = this.paymentReference.trim();
+                if (this.selectedCustomer) {
+                    payload.customer_id = this.selectedCustomer.id;
+                }
+                if (this.paymentMethod === 'split') {
+                    payload.payments = [
+                        { method: 'cash', amount: Number(this.splitCash) || 0 },
+                        { method: 'card', amount: Number(this.splitCard) || 0 },
+                    ].filter((p) => p.amount > 0);
+                    payload.tendered_amount = this.splitTotal;
+                } else {
+                    if (this.paymentReference.trim()) {
+                        payload.payment_reference = this.paymentReference.trim();
+                    }
+                    if (this.paymentMethod === 'cash' && this.tendered !== '') {
+                        payload.tendered_amount = Number(this.tendered);
+                    }
                 }
                 if (Number(this.tip) > 0) {
                     payload.tip_amount = Number(this.tip);
@@ -285,8 +405,9 @@ export function posTerminal({ branchId = null } = {}) {
                 if (this.couponApplied) {
                     payload.coupon_code = this.couponApplied;
                 }
-                if (this.paymentMethod === 'cash' && this.tendered !== '') {
-                    payload.tendered_amount = Number(this.tendered);
+                if (this.fulfillment === 'delivery') {
+                    payload.delivery_address = this.deliveryAddress.trim();
+                    payload.delivery_fee = Number(this.deliveryFee) || 0;
                 }
                 const { data } = await http.post('/api/v1/sales', payload);
                 this.lastSaleId = data?.data?.invoice_number ?? data?.data?.id ?? 'N/A';
@@ -314,8 +435,12 @@ export function posTerminal({ branchId = null } = {}) {
             this.cart = [];
             this.checkoutError = '';
             this.tendered = '';
+            this.splitCash = '';
+            this.splitCard = '';
             this.tip = 0;
             this.paymentReference = '';
+            this.quoteNumber = '';
+            this.quoteError = '';
             this.removeCoupon();
         },
 

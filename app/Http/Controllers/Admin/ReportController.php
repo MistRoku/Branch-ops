@@ -75,11 +75,11 @@ class ReportController extends Controller
 
         return match ($type) {
             'sales' => [
-                ['Invoice', 'Branch', 'Cashier', 'Payment', 'Subtotal', 'Discount', 'Tax', 'Tip', 'Total', 'Status', 'Date'],
-                $dateScope(Sale::with(['branch', 'user'])->orderByDesc('created_at'))
+                ['Invoice', 'Branch', 'Cashier', 'Customer', 'Payment', 'Fulfillment', 'Subtotal', 'Discount', 'Tax', 'Tip', 'Delivery', 'Total', 'Status', 'Date'],
+                $dateScope(Sale::with(['branch', 'user', 'customer'])->orderByDesc('created_at'))
                     ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
                     ->limit(5000)->get()
-                    ->map(fn ($s) => [$s->invoice_number, $s->branch?->name, $s->user?->name, $s->payment_method, $s->subtotal, $s->discount_amount, $s->tax_amount, $s->tip_amount, $s->total_amount, $s->status, $s->created_at?->format('Y-m-d H:i')])->all(),
+                    ->map(fn ($s) => [$s->invoice_number, $s->branch?->name, $s->user?->name, $s->customer?->name, $s->payment_method, $s->fulfillment, $s->subtotal, $s->discount_amount, $s->tax_amount, $s->tip_amount, $s->delivery_fee, $s->total_amount, $s->status, $s->created_at?->format('Y-m-d H:i')])->all(),
             ],
             'refunds' => [
                 ['Sale', 'Branch', 'Type', 'Amount', 'Processed by', 'Reason', 'Date'],

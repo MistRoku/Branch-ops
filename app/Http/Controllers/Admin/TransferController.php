@@ -32,7 +32,16 @@ class TransferController extends Controller
 
     public function create(): View
     {
-        return view('admin.transfers.create', ['branches' => Branch::orderBy('name')->get(), 'products' => Product::active()->orderBy('name')->get()]);
+        $products = Product::active()->with('stockLevels.branch')->orderBy('name')->get();
+        // product_id => [branch_id => ['qty' => n, 'location' => 'bin']]
+        $stockMap = [];
+        foreach ($products as $p) {
+            foreach ($p->stockLevels as $sl) {
+                $stockMap[$p->id][$sl->branch_id] = ['qty' => $sl->quantity, 'location' => $sl->location];
+            }
+        }
+
+        return view('admin.transfers.create', ['branches' => Branch::orderBy('name')->get(), 'products' => $products, 'stockMap' => $stockMap]);
     }
 
     public function store(Request $request): RedirectResponse

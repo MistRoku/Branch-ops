@@ -104,6 +104,7 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wide">Product</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wide">SKU</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wide">Branch</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wide">Location</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wide">Quantity</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wide">Reorder Level</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wide">Status</th>
@@ -121,6 +122,9 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">{{ $stock->branch->name }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ $stock->location ?? '—' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php

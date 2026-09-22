@@ -21,6 +21,8 @@ class Branch extends Model
         'tax_rate',
         'receipt_header',
         'receipt_footer',
+        'logo_path',
+        'accent_color',
     ];
 
     protected $casts = [

@@ -17,14 +17,14 @@
 
     @stack('styles')
 </head>
-<body class="bg-brand-50 text-brand-900 h-screen overflow-hidden" x-data="connectionStatus">
+<body class="bg-brand-50 text-brand-900 h-screen overflow-hidden" style="--brand-accent: {{ auth()->user()?->branch?->accent_color ?? '#2563eb' }}" x-data="connectionStatus">
     <div class="h-full flex flex-col">
         <!-- Header Bar (No Sidebar) -->
         <header class="bg-brand-100 border-b border-brand-200 px-6 py-3 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-4">
                 <!-- Brand -->
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-accent-500 flex items-center justify-center">
+                    <div class="w-10 h-10 themed-bg flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
                             <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                             <line x1="3" y1="6" x2="21" y2="6"></line>

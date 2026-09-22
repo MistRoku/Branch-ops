@@ -250,6 +250,16 @@ body {
     background-color: #f1f5f9 !important;
 }
 
+/* Branch theme accent (set per branch in back-office settings) */
+.themed-bg {
+    background-color: var(--brand-accent, #2563eb);
+    color: #ffffff;
+}
+
+.themed-text {
+    color: var(--brand-accent, #2563eb);
+}
+
 /* POS compact display mode */
 .pos-compact .p-4 {
     padding: 0.625rem;

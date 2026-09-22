@@ -14,6 +14,7 @@ class Sale extends Model
     protected $fillable = [
         'branch_id',
         'user_id',
+        'customer_id',
         'cash_drawer_id',
         'invoice_number',
         'status',
@@ -23,10 +24,14 @@ class Sale extends Model
         'tip_amount',
         'tendered_amount',
         'change_amount',
+        'delivery_fee',
         'total_amount',
         'payment_method',
         'payment_reference',
+        'payments',
         'coupon_code',
+        'fulfillment',
+        'delivery_address',
         'notes',
         'completed_at',
         'void_reason',
@@ -41,7 +46,9 @@ class Sale extends Model
         'tip_amount' => 'decimal:2',
         'tendered_amount' => 'decimal:2',
         'change_amount' => 'decimal:2',
+        'delivery_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'payments' => 'array',
         'completed_at' => 'datetime',
         'voided_at' => 'datetime',
     ];
@@ -55,6 +62,11 @@ class Sale extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function user(): BelongsTo
@@ -80,6 +92,11 @@ class Sale extends Model
     public function stockMovements(): HasMany
     {
         return $this->morphMany(StockMovement::class, 'reference');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->morphMany(Document::class, 'entity');
     }
 
     public function scopeCompleted($query)

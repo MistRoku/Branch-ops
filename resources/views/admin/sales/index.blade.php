@@ -20,7 +20,7 @@
         </select>
         <select name="payment_method" class="border border-brand-300 bg-brand-50 px-2 py-1">
             <option value="">All payments</option>
-            @foreach(['cash','card','mobile','credit'] as $p)<option value="{{ $p }}" @selected(request('payment_method') === $p)>{{ ucfirst($p) }}</option>@endforeach
+            @foreach(['cash','card','split'] as $p)<option value="{{ $p }}" @selected(request('payment_method') === $p)>{{ ucfirst($p) }}</option>@endforeach
         </select>
         <input name="from" type="date" value="{{ request('from') }}" class="border border-brand-300 bg-brand-50 px-2 py-1" />
         <input name="to" type="date" value="{{ request('to') }}" class="border border-brand-300 bg-brand-50 px-2 py-1" />

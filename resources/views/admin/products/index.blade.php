@@ -3,7 +3,9 @@
     Displays a list of all products with filtering and search capabilities
 --}}
 
-<x-layouts.admin title="Products">
+@extends('components.layouts.admin')
+@section('title', 'Products')
+@section('content')
     <div class="space-y-6">
         {{-- Header Section --}}
         <div class="flex items-center justify-between border-b border-gray-200 pb-4">
@@ -11,7 +13,7 @@
                 <h1 class="text-2xl font-semibold text-gray-900">Products</h1>
                 <p class="mt-1 text-sm text-gray-500">Manage your product catalog</p>
             </div>
-            @if(auth()->user()->isSuperAdmin())
+            @if(auth()->user()->isSuperAdmin() || auth()->user()->isBranchManager())
                 <a href="{{ route('admin.products.create') }}" 
                    class="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +155,7 @@
                                         <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                                     </svg>
                                     <p class="mt-2 text-sm text-gray-500">No products found</p>
-                                    @if(auth()->user()->isSuperAdmin())
+                                    @if(auth()->user()->isSuperAdmin() || auth()->user()->isBranchManager())
                                         <a href="{{ route('admin.products.create') }}" class="mt-2 inline-block text-sm font-medium text-gray-900 hover:underline">Add your first product</a>
                                     @endif
                                 </td>
@@ -171,4 +173,4 @@
             @endif
         </div>
     </div>
-</x-layouts.admin>
+@endsection

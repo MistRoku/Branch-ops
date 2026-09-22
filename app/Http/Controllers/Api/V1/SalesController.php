@@ -43,8 +43,16 @@ class SalesController extends Controller
 
         $validated = $request->validate([
             'branch_id' => 'nullable|exists:branches,id',
-            'payment_method' => 'required|in:cash,card,mobile,credit',
+            'customer_id' => 'nullable|exists:customers,id',
+            'payment_method' => 'required|in:cash,card,split',
             'payment_reference' => 'nullable|string|max:100',
+            'payments' => 'nullable|array|min:2',
+            'payments.*.method' => 'required|in:cash,card',
+            'payments.*.amount' => 'required|numeric|min:0.01',
+            'payments.*.reference' => 'nullable|string|max:100',
+            'fulfillment' => 'nullable|in:pickup,delivery',
+            'delivery_address' => 'nullable|string|max:500',
+            'delivery_fee' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'tip_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
@@ -109,9 +117,25 @@ class SalesController extends Controller
                 $manualDiscount = (float) ($validated['discount_amount'] ?? 0);
                 $discount = round(min($manualDiscount + $couponDiscount, $subtotal), 2);
                 $tip = round((float) ($validated['tip_amount'] ?? 0), 2);
-                $total = round($subtotal - $discount + $taxTotal + $tip, 2);
+                $deliveryFee = round((float) ($validated['delivery_fee'] ?? 0), 2);
+                $fulfillment = $validated['fulfillment'] ?? 'pickup';
+                if ($fulfillment === 'delivery' && empty($validated['delivery_address'])) {
+                    throw new \Exception('A delivery address is required for delivery orders.');
+                }
+                $total = round($subtotal - $discount + $taxTotal + $tip + $deliveryFee, 2);
 
                 $tendered = isset($validated['tendered_amount']) ? (float) $validated['tendered_amount'] : null;
+                $payments = $validated['payments'] ?? null;
+                if (($validated['payment_method'] ?? 'cash') === 'split') {
+                    if (empty($payments)) {
+                        throw new \Exception('Split payments require at least two payment lines.');
+                    }
+                    $splitTotal = round(array_sum(array_column($payments, 'amount')), 2);
+                    if (abs($splitTotal - $total) > 0.01) {
+                        throw new \Exception('Split payment amounts must add up to the sale total.');
+                    }
+                    $tendered = $splitTotal;
+                }
                 if ($tendered !== null && $tendered < $total) {
                     throw new \Exception('Tendered amount is less than the sale total.');
                 }
@@ -122,9 +146,14 @@ class SalesController extends Controller
                 $sale = Sale::create([
                     'branch_id' => $branchId,
                     'user_id' => $user->id,
+                    'customer_id' => $validated['customer_id'] ?? null,
                     'invoice_number' => Sale::generateInvoiceNumber($branchId),
                     'payment_method' => $validated['payment_method'],
                     'payment_reference' => $validated['payment_reference'] ?? null,
+                    'payments' => $payments,
+                    'fulfillment' => $fulfillment,
+                    'delivery_address' => $validated['delivery_address'] ?? null,
+                    'delivery_fee' => $deliveryFee,
                     'subtotal' => $subtotal,
                     'tax_amount' => $taxTotal,
                     'discount_amount' => $discount,
@@ -137,6 +166,11 @@ class SalesController extends Controller
                     'status' => 'completed',
                     'completed_at' => now(),
                 ]);
+
+                if (! empty($validated['customer_id'])) {
+                    \App\Models\Customer::where('id', $validated['customer_id'])
+                        ->increment('loyalty_points', (int) floor($total / 10));
+                }
 
                 $coupon?->increment('used_count');
 
@@ -195,7 +229,7 @@ class SalesController extends Controller
     {
         $user = Auth::user();
 
-        $query = Sale::with(['items.product', 'branch', 'user'])
+        $query = Sale::with(['items.product', 'branch', 'user', 'customer'])
             ->orderBy('created_at', 'desc');
 
         // Filter by branch
@@ -253,6 +287,7 @@ class SalesController extends Controller
             'items.product',
             'branch',
             'user',
+            'customer',
             'documents',
         ])->findOrFail($id);
 

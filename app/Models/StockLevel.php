@@ -15,6 +15,7 @@ class StockLevel extends Model
         'product_id',
         'branch_id',
         'quantity',
+        'location',
         'valuation',
         'last_counted_at',
     ];

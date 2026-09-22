@@ -53,7 +53,7 @@ class SaleController extends Controller
      */
     public function show(int $id): View
     {
-        $sale = Sale::with(['items.product', 'branch', 'user', 'refunds.user', 'voidedBy'])->findOrFail($id);
+        $sale = Sale::with(['items.product', 'branch', 'user', 'customer', 'refunds.user', 'voidedBy'])->findOrFail($id);
         $this->authorizeBranch($sale->branch_id);
 
         return view('admin.sales.show', compact('sale'));
@@ -64,7 +64,7 @@ class SaleController extends Controller
      */
     public function receipt(int $id): View
     {
-        $sale = Sale::with(['items.product', 'branch', 'user'])->findOrFail($id);
+        $sale = Sale::with(['items.product', 'branch', 'user', 'customer'])->findOrFail($id);
         $this->authorizeBranch($sale->branch_id);
 
         return view('admin.sales.receipt', compact('sale'));

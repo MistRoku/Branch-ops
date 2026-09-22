@@ -6,6 +6,8 @@
         <div>
             <h1 class="text-xl font-semibold">{{ $sale->invoice_number }}</h1>
             <p class="text-sm text-brand-600">{{ $sale->branch?->name }} · {{ $sale->created_at->format('Y-m-d H:i') }} · Cashier: {{ $sale->user?->name }}</p>
+        @if($sale->customer)<p class="text-sm text-brand-600">Customer: {{ $sale->customer->name }} ({{ $sale->customer->loyalty_points }} pts)</p>@endif
+        <p class="text-sm text-brand-600">Fulfilment: {{ ucfirst($sale->fulfillment ?? 'pickup') }} @if($sale->fulfillment === 'delivery') — {{ $sale->delivery_address }} @endif</p>
         </div>
         <span class="px-2 py-1 text-xs text-white {{ $sale->status === 'completed' ? 'bg-success' : ($sale->status === 'void' ? 'bg-danger' : 'bg-warning') }}">{{ ucfirst($sale->status) }}</span>
     </div>
@@ -30,8 +32,10 @@
         <div class="flex justify-between"><span class="text-brand-600">Discount @if($sale->coupon_code) ({{ $sale->coupon_code }}) @endif</span><span>R {{ number_format($sale->discount_amount, 2) }}</span></div>
         <div class="flex justify-between"><span class="text-brand-600">Tax</span><span>R {{ number_format($sale->tax_amount, 2) }}</span></div>
         <div class="flex justify-between"><span class="text-brand-600">Tip</span><span>R {{ number_format($sale->tip_amount, 2) }}</span></div>
+        @if($sale->delivery_fee > 0)<div class="flex justify-between"><span class="text-brand-600">Delivery fee</span><span>R {{ number_format($sale->delivery_fee, 2) }}</span></div>@endif
         <div class="flex justify-between font-semibold text-base pt-1 border-t border-brand-200"><span>Total</span><span>R {{ number_format($sale->total_amount, 2) }}</span></div>
         <div class="flex justify-between"><span class="text-brand-600">Paid ({{ ucfirst($sale->payment_method) }})</span><span>@if($sale->tendered_amount !== null) R {{ number_format($sale->tendered_amount, 2) }} @else — @endif</span></div>
+        @if($sale->payments)<div class="flex justify-between"><span class="text-brand-600">Split</span><span class="text-right">@foreach($sale->payments as $p)<span class="block">{{ $p['method'] }} R {{ number_format($p['amount'], 2) }}</span>@endforeach</span></div>@endif
         @if($sale->change_amount > 0)<div class="flex justify-between"><span class="text-brand-600">Change</span><span>R {{ number_format($sale->change_amount, 2) }}</span></div>@endif
         @if($sale->payment_reference)<div class="flex justify-between"><span class="text-brand-600">Reference</span><span>{{ $sale->payment_reference }}</span></div>@endif
     </div>

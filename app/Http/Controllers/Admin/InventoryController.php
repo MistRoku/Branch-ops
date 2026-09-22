@@ -185,6 +185,7 @@ class InventoryController extends Controller
             'product_id' => 'required|exists:products,id',
             'branch_id' => 'required|exists:branches,id',
             'quantity' => 'required|integer',
+            'location' => 'nullable|string|max:100',
             'reason' => 'required|string|max:255',
         ]);
 
@@ -202,6 +203,12 @@ class InventoryController extends Controller
                 $validated['reason'],
                 'manual'
             );
+
+            if (! empty($validated['location'])) {
+                StockLevel::where('product_id', $validated['product_id'])
+                    ->where('branch_id', $validated['branch_id'])
+                    ->update(['location' => $validated['location']]);
+            }
 
             // Clear valuation cache for this branch and the all-branches view
             Cache::forget('inventory_valuation_'.$validated['branch_id']);

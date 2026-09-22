@@ -69,13 +69,14 @@ class ProductController extends Controller
      */
     public function create(): View
     {
-        $suppliers = Supplier::orderBy('name')->get();
-        $branches = Branch::orderBy('name')->get();
-
-        // Only super admins can create products
-        if (! Auth::user()->isSuperAdmin()) {
-            abort(403, 'Only super admins can create products');
+        $user = Auth::user();
+        if (! $user->isSuperAdmin() && ! $user->isBranchManager()) {
+            abort(403, 'Only managers can create products');
         }
+        $suppliers = Supplier::orderBy('name')->get();
+        $branches = $user->isSuperAdmin()
+            ? Branch::orderBy('name')->get()
+            : Branch::where('id', $user->branch_id)->get();
 
         return view('admin.products.create', compact('suppliers', 'branches'));
     }
@@ -88,9 +89,9 @@ class ProductController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // Only super admins can create products
-        if (! Auth::user()->isSuperAdmin()) {
-            abort(403, 'Only super admins can create products');
+        $user = Auth::user();
+        if (! $user->isSuperAdmin() && ! $user->isBranchManager()) {
+            abort(403, 'Only managers can create products');
         }
 
         $validated = $request->validate([
@@ -110,12 +111,15 @@ class ProductController extends Controller
             'initial_stock.*.quantity' => 'required_with:initial_stock|integer|min:0',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $user) {
             $product = Product::create($validated);
 
-            // Create initial stock levels if provided
+            // Create initial stock levels if provided (managers: own branch only)
             if (! empty($validated['initial_stock'])) {
                 foreach ($validated['initial_stock'] as $stock) {
+                    if (! $user->isSuperAdmin() && (int) $stock['branch_id'] !== (int) $user->branch_id) {
+                        continue;
+                    }
                     StockLevel::create([
                         'product_id' => $product->id,
                         'branch_id' => $stock['branch_id'],

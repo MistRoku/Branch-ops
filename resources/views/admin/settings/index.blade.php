@@ -18,7 +18,7 @@
 @if(auth()->user()->isSuperAdmin() || auth()->user()->isBranchManager())
 <div class="bg-brand-100 border border-brand-200 p-6"><h2 class="text-xl font-semibold">Branch Operations</h2>
 <p class="text-sm text-brand-600 mt-1">Tax rate applies to new sales at this branch. Receipt header and footer print on every customer receipt.</p>
-<form method="POST" action="{{ route('admin.settings.branch') }}" class="space-y-3 mt-4">@csrf @method('PUT')
+<form method="POST" action="{{ route('admin.settings.branch') }}" class="space-y-3 mt-4" enctype="multipart/form-data">@csrf @method('PUT')
 <label class="block text-sm font-medium">Branch
 <select name="branch_id" class="w-full border border-brand-300 bg-brand-50 px-3 py-2 text-sm mt-1">
 @foreach($branches as $b)
@@ -33,6 +33,11 @@
 <label class="block text-sm font-medium">Address<input name="address" value="{{ $branch?->address }}" class="w-full border border-brand-300 bg-brand-50 px-3 py-2 text-sm mt-1"/></label>
 <label class="block text-sm font-medium">Receipt header<input name="receipt_header" value="{{ $branch?->receipt_header }}" class="w-full border border-brand-300 bg-brand-50 px-3 py-2 text-sm mt-1"/></label>
 <label class="block text-sm font-medium">Receipt footer<input name="receipt_footer" value="{{ $branch?->receipt_footer }}" class="w-full border border-brand-300 bg-brand-50 px-3 py-2 text-sm mt-1"/></label>
+<div class="flex gap-2 items-end">
+<label class="block text-sm font-medium">Theme colour<input name="accent_color" type="color" value="{{ $branch?->accent_color ?? '#2563eb' }}" class="w-16 h-10 border border-brand-300 bg-brand-50 mt-1"/></label>
+<p class="text-xs text-brand-500 pb-2">Applies to this branch on the till and back office.</p>
+</div>
+<label class="block text-sm font-medium">Branch logo (shows on receipts)@if($branch?->logo_path)<span class="text-brand-500 font-normal"> — current logo on file</span>@endif<input name="logo" type="file" accept="image/*" class="w-full border border-brand-300 bg-brand-50 px-3 py-2 text-sm mt-1"/></label>
 <button class="px-4 py-2 bg-brand-900 text-white text-sm">Save branch settings</button></form></div>
 @endif
 </div>

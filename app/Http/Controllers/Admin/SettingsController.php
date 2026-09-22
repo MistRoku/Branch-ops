@@ -55,6 +55,8 @@ class SettingsController extends Controller
             'address' => 'nullable|string|max:500',
             'receipt_header' => 'nullable|string|max:255',
             'receipt_footer' => 'nullable|string|max:500',
+            'accent_color' => 'nullable|regex:/^#[0-9a-fA-F]{6}$/',
+            'logo' => 'nullable|image|max:2048',
         ]);
 
         if (! $user->isSuperAdmin() && (int) $validated['branch_id'] !== (int) $user->branch_id) {
@@ -64,13 +66,24 @@ class SettingsController extends Controller
             abort(403, 'Only managers can change branch settings');
         }
 
-        Branch::where('id', $validated['branch_id'])->update([
+        $branch = Branch::findOrFail($validated['branch_id']);
+        $data = [
             'tax_rate' => $validated['tax_rate'],
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'receipt_header' => $validated['receipt_header'] ?? null,
             'receipt_footer' => $validated['receipt_footer'] ?? null,
-        ]);
+            'accent_color' => $validated['accent_color'] ?? $branch->accent_color,
+        ];
+
+        if ($request->hasFile('logo')) {
+            if ($branch->logo_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($branch->logo_path);
+            }
+            $data['logo_path'] = $request->file('logo')->store('branch-logos', 'public');
+        }
+
+        $branch->update($data);
 
         return back()->with('success', 'Branch settings updated');
     }
