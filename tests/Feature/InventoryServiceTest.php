@@ -58,6 +58,37 @@ class InventoryServiceTest extends TestCase
     }
 
     /**
+     * A freshly created stock row must start at exactly zero quantity and
+     * zero valuation — regression test for the two-argument create() bug
+     * where the defaults array was silently ignored.
+     */
+    public function test_fresh_stock_row_starts_at_exactly_zero(): void
+    {
+        $branch = Branch::create(['name' => 'Zero Branch', 'code' => 'ZERO-01', 'is_active' => true]);
+        $product = Product::create([
+            'name' => 'Zero Product',
+            'sku' => 'TEST-ZERO',
+            'cost_price' => 10.00,
+            'selling_price' => 20.00,
+            'is_active' => true,
+        ]);
+
+        $service = new InventoryService();
+        $service->adjustStock($product->id, $branch->id, 3, 'Initial stock', 'manual');
+
+        $row = StockLevel::where('product_id', $product->id)->where('branch_id', $branch->id)->first();
+        $this->assertNotNull($row);
+        $this->assertSame(3, $row->quantity);
+        $this->assertEquals('0.00', $row->valuation);
+
+        $service->adjustStock($product->id, $branch->id, -3, 'Write off', 'manual');
+
+        $row = $row->fresh();
+        $this->assertSame(0, $row->quantity);
+        $this->assertEquals('0.00', $row->valuation);
+    }
+
+    /**
      * Test that adjustStock with zero adjustment throws ValidationException
      */
     public function test_adjust_stock_with_zero_adjustment_throws_validation_exception(): void

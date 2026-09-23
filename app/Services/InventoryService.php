@@ -53,10 +53,12 @@ class InventoryService
                 ->first();
             if (! $stockLevel) {
                 try {
-                    $stockLevel = StockLevel::create(
-                        ['product_id' => $productId, 'branch_id' => $branchId],
-                        ['quantity' => 0, 'valuation' => 0]
-                    );
+                    StockLevel::create([
+                        'product_id' => $productId,
+                        'branch_id' => $branchId,
+                        'quantity' => 0,
+                        'valuation' => 0,
+                    ]);
                     $stockLevel = StockLevel::where('product_id', $productId)
                         ->where('branch_id', $branchId)
                         ->lockForUpdate()
