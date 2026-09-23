@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Sale extends Model
 {
@@ -89,12 +90,12 @@ class Sale extends Model
         return $this->belongsTo(User::class, 'voided_by');
     }
 
-    public function stockMovements(): HasMany
+    public function stockMovements(): MorphMany
     {
         return $this->morphMany(StockMovement::class, 'reference');
     }
 
-    public function documents(): HasMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'entity');
     }

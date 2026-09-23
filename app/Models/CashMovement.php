@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * CashMovement model for tracking individual cash drawer transactions.
@@ -88,7 +89,7 @@ class CashMovement extends Model
     /**
      * Get the related entity (sale, refund, etc.).
      */
-    public function reference(): MorphMany
+    public function reference(): MorphTo
     {
         return $this->morphTo();
     }
