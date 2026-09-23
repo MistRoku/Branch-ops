@@ -51,7 +51,7 @@
         <tr><td class="t">TOTAL</td><td class="r t">R {{ number_format($sale->total_amount, 2) }}</td></tr>
         @if($sale->tendered_amount !== null)<tr><td class="m">Tendered</td><td class="r">R {{ number_format($sale->tendered_amount, 2) }}</td></tr>
         <tr><td class="m">Change</td><td class="r">R {{ number_format($sale->change_amount, 2) }}</td></tr>@endif
-        @if($sale->payments)<tr><td class="m">Split</td><td class="r">@foreach($sale->payments as $p){{ $p['method'] }} R {{ number_format($p['amount'], 2) }}@if(!$loop->last)<br>@endif@endforeach</td></tr>@endif
+        @if($sale->payments)<tr><td class="m">Split</td><td class="r">@foreach($sale->payments as $p)<span style="display:block">{{ $p['method'] }} R {{ number_format($p['amount'], 2) }}</span>@endforeach</td></tr>@endif
     </table>
     <hr>
     <p class="c m">{{ $sale->branch?->receipt_footer ?? 'Thank you for shopping with us' }}</p>
