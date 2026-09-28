@@ -22,9 +22,14 @@
 <body>
 <div class="toolbar"><button onclick="window.print()">Print receipt</button></div>
 <div class="receipt">
-    @if($sale->branch?->logo_path)<img src="{{ asset('storage/' . $sale->branch->logo_path) }}" alt="Branch logo" class="logo" />@endif
-    <h1>{{ $sale->branch?->receipt_header ?? $sale->branch?->name ?? 'BranchOps' }}</h1>
-    <p class="c m">{{ $sale->branch?->address }}<br>{{ $sale->branch?->phone }}</p>
+    @if(($business->use_logo_in_invoice ?? true) && ($business->logo_path ?? null))
+    <img src="{{ asset('storage/' . $business->logo_path) }}" alt="Business logo" class="logo" />
+    @endif
+    @if(! (($business->use_logo_in_invoice ?? true) && ($business->logo_path ?? null)) && $sale->branch?->logo_path)
+    <img src="{{ asset('storage/' . $sale->branch->logo_path) }}" alt="Branch logo" class="logo" />
+    @endif
+    <h1>{{ $business->business_name ?? $sale->branch?->receipt_header ?? $sale->branch?->name ?? 'BranchOps' }}</h1>
+    <p class="c m">@if($business->register_number) Reg {{ $business->register_number }} · @endif @if($business->vat_number) VAT {{ $business->vat_number }}<br>@endif {{ $sale->branch?->address_line1 ?? $sale->branch?->address }}<br>{{ $sale->branch?->phone }}</p>
     <hr>
     <table>
         <tr><td class="m">Invoice</td><td class="r">{{ $sale->invoice_number }}</td></tr>

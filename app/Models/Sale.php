@@ -143,6 +143,8 @@ class Sale extends Model
             ->where('branch_id', $branchId)
             ->count() + 1;
 
-        return sprintf('INV-%s-%03d-%05d', $date, $branchId, $dailyCount);
+        $series = Branch::where('id', $branchId)->value('transaction_series') ?: 'INV';
+
+        return sprintf('%s-%s-%03d-%05d', $series, $date, $branchId, $dailyCount);
     }
 }

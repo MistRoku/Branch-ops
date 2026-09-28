@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Branch extends Model
@@ -13,8 +14,18 @@ class Branch extends Model
     protected $fillable = [
         'name',
         'code',
+        'parent_id',
         'address',
+        'address_line1',
+        'address_line2',
+        'city',
+        'postal_code',
+        'country',
+        'province',
+        'transaction_series',
+        'warehouses',
         'phone',
+        'website',
         'email',
         'is_active',
         'settings',
@@ -28,8 +39,19 @@ class Branch extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'settings' => 'array',
+        'warehouses' => 'array',
         'tax_rate' => 'decimal:2',
     ];
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Branch::class, 'parent_id');
+    }
 
     public function users(): HasMany
     {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BranchController as AdminBranchController;
+use App\Http\Controllers\Admin\BusinessProfileController as AdminBusinessProfileController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -138,6 +139,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::prefix('grv')->name('admin.grv.')->group(function () {
         Route::get('/', [AdminGoodsReceivedController::class, 'index'])->name('index');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Business Profile (super admin only, one organization)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('business-profile')->name('admin.business-profile.')->group(function () {
+        Route::get('/', [AdminBusinessProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [AdminBusinessProfileController::class, 'update'])->name('update');
     });
 
     /*

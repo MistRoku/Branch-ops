@@ -66,8 +66,9 @@ class SaleController extends Controller
     {
         $sale = Sale::with(['items.product', 'branch', 'user', 'customer'])->findOrFail($id);
         $this->authorizeBranch($sale->branch_id);
+        $business = \App\Models\BusinessProfile::current();
 
-        return view('admin.sales.receipt', compact('sale'));
+        return view('admin.sales.receipt', compact('sale', 'business'));
     }
 
     /**
