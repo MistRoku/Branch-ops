@@ -151,4 +151,14 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')->with('success', 'User deactivated successfully');
     }
+
+    public function activate(int $id): RedirectResponse
+    {
+        $this->authorizeSuperAdmin();
+
+        $user = User::findOrFail($id);
+        $user->update(['is_active' => true]);
+
+        return redirect()->route('admin.users.index')->with('success', 'User activated successfully');
+    }
 }

@@ -12,9 +12,11 @@ class EnsureUserIsActive
     {
         $user = $request->user();
 
-        if ($user && (! $user->is_active || $user->isLocked())) {
+        $branchClosed = $user && $user->branch_id && ! $user->branch?->is_active && ! $user->isSuperAdmin();
+
+        if ($user && (! $user->is_active || $user->isLocked() || $branchClosed)) {
             if ($request->is('api/*') || $request->expectsJson()) {
-                abort(403, $user->isLocked() ? 'Account locked. Try again later.' : 'Account deactivated');
+                abort(403, $user->isLocked() ? 'Account locked. Try again later.' : ($branchClosed ? 'Branch deactivated. Contact head office.' : 'Account deactivated'));
             }
 
             auth()->guard('web')->logout();

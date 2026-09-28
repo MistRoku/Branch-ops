@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\BranchController as AdminBranchController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -141,6 +142,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Branch Management Routes (super admin only)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('branches')->name('admin.branches.')->group(function () {
+        Route::get('/', [AdminBranchController::class, 'index'])->name('index');
+        Route::get('/create', [AdminBranchController::class, 'create'])->name('create');
+        Route::post('/', [AdminBranchController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [AdminBranchController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminBranchController::class, 'update'])->name('update');
+        Route::put('/{id}/deactivate', [AdminBranchController::class, 'deactivate'])->name('deactivate');
+        Route::put('/{id}/activate', [AdminBranchController::class, 'activate'])->name('activate');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | Product Management Routes
     |--------------------------------------------------------------------------
     */
@@ -151,6 +167,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}', [ProductController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [ProductController::class, 'edit'])->name('edit');
         Route::put('/{id}', [ProductController::class, 'update'])->name('update');
+        Route::put('/{id}/activate', [ProductController::class, 'activate'])->name('activate');
         Route::delete('/{id}', [ProductController::class, 'destroy'])->name('destroy');
     });
 
@@ -245,6 +262,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}', [AdminUserController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [AdminUserController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AdminUserController::class, 'update'])->name('update');
+        Route::put('/{id}/activate', [AdminUserController::class, 'activate'])->name('activate');
         Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
 

@@ -251,4 +251,23 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')
             ->with('success', 'Product deactivated successfully');
     }
+
+    /**
+     * Reactivate a deactivated product
+     */
+    public function activate(int $id): RedirectResponse
+    {
+        $product = Product::findOrFail($id);
+
+        // Managers can edit products, so they can reactivate them too
+        $user = Auth::user();
+        if (! $user->isSuperAdmin() && ! $user->canSeeCostPrices()) {
+            abort(403, 'Unauthorized to activate products');
+        }
+
+        $product->update(['is_active' => true]);
+
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product activated successfully');
+    }
 }

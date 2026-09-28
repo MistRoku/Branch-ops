@@ -56,6 +56,13 @@ class LoginController extends Controller
             ])->onlyInput('email');
         }
 
+        // Reject staff whose branch was deactivated
+        if ($user && $user->branch_id && ! $user->isSuperAdmin() && ! $user->branch?->is_active) {
+            return back()->withErrors([
+                'email' => 'This branch has been deactivated. Contact head office.',
+            ])->onlyInput('email');
+        }
+
         // Attempt to authenticate the user
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             // Regenerate session to prevent fixation attacks

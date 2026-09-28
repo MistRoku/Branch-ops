@@ -136,7 +136,16 @@
                                             <a href="{{ route('admin.products.edit', $product) }}" 
                                                class="text-gray-600 hover:text-gray-900">Edit</a>
                                         @endif
-                                        @if(auth()->user()->isSuperAdmin())
+                                        @if(!$product->is_active && (auth()->user()->isSuperAdmin() || auth()->user()->canSeeCostPrices()))
+                                            <form action="{{ route('admin.products.activate', $product) }}" 
+                                                  method="POST" 
+                                                  onsubmit="return confirm('Activate {{ addslashes($product->name) }}? It will be available for sale again.')">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit" class="text-green-700 hover:text-green-900">Activate</button>
+                                            </form>
+                                        @endif
+                                        @if($product->is_active && auth()->user()->isSuperAdmin())
                                             <form action="{{ route('admin.products.destroy', $product) }}" 
                                                   method="POST" 
                                                   onsubmit="return confirm('Are you sure you want to deactivate this product?')">

@@ -81,6 +81,14 @@
                         </a>
                     </li>
                     @endforeach
+                    @if(auth()->user()?->isSuperAdmin())
+                    <li>
+                        <a href="/admin/branches" title="Branches" class="flex items-center gap-3 px-3 py-2 text-sm hover:bg-brand-800 {{ request()->is('admin/branches*') ? 'bg-brand-800' : '' }}">
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4"/></svg>
+                            <span x-show="!collapsed">Branches</span>
+                        </a>
+                    </li>
+                    @endif
                     @endif
                 </ul>
             </nav>
