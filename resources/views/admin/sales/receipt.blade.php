@@ -28,6 +28,10 @@
         body { background: #fff; }
         .receipt { border: 0; margin: 0; width: auto; font-size: 11px; }
         @page { size: 80mm auto; margin: 2mm; }
+        .sep, .sep-thin { border-top-style: solid; border-top-color: #000; }
+        .sep { border-top-width: 3px; }
+        .sep-thin { border-top-width: 2px; }
+        .items th { border-bottom: 2px solid #000; color: #000; }
     }
 </style>
 </head>
