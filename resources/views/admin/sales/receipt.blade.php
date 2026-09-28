@@ -60,7 +60,7 @@
         @foreach($sale->items as $it)
         <tr>
             <td>{{ $it->quantity }}</td>
-            <td>{{ $it->product?->name }}<br><span class="m">{{ $it->product?->unit_of_measure ?? 'piece' }} @ R {{ number_format($it->unit_price, 2) }}</span></td>
+            <td>{{ $it->product?->name }} <span class="m">{{ $it->product?->unit_of_measure ?? 'piece' }} @ R {{ number_format($it->unit_price, 2) }}</span></td>
             <td class="r">R {{ number_format($it->total, 2) }}</td>
         </tr>
         @endforeach
