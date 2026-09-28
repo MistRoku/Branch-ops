@@ -22,12 +22,19 @@
     .barcode i { display: block; background: #0f172a; }
     .toolbar { text-align: center; margin: 16px; }
     .toolbar button { padding: 8px 20px; background: #0f172a; color: #fff; border: 0; font-size: 14px; cursor: pointer; }
-    @media print { .toolbar { display: none; } body { background: #fff; } .receipt { border: 0; margin: 0; width: auto; } }
+    .keep { break-inside: avoid; page-break-inside: avoid; }
+    @media print {
+        .toolbar { display: none; }
+        body { background: #fff; }
+        .receipt { border: 0; margin: 0; width: auto; font-size: 11px; }
+        @page { size: 80mm auto; margin: 2mm; }
+    }
 </style>
 </head>
 <body>
 <div class="toolbar"><button onclick="window.print()">Print receipt</button></div>
 <div class="receipt">
+    <div class="keep">
     @if(($business->use_logo_in_invoice ?? true) && ($business->logo_path ?? null))
     <img src="{{ asset('storage/' . $business->logo_path) }}" alt="Business logo" class="logo" />
     @endif
@@ -66,6 +73,7 @@
         @endforeach
     </table>
     <hr class="sep-thin">
+    <div class="keep">
     <table>
         <tr><td></td><td class="r">Sub Total</td><td class="r">R {{ number_format($sale->subtotal, 2) }}</td></tr>
         <tr><td></td><td class="r">VAT</td><td class="r">R {{ number_format($sale->tax_amount, 2) }}</td></tr>
@@ -95,6 +103,7 @@
         <tr><td>Tip:</td><td class="r">R {{ number_format($sale->tip_amount, 2) }}</td></tr>
         <tr><td class="grand">Total:</td><td class="r grand">R {{ number_format($sale->total_amount, 2) }}</td></tr>
     </table>
+    </div>
     <hr class="sep">
     @php
         $code39 = ['0' => 'nnnwwnwnn','1' => 'wnnwnnnnw','2' => 'nnwwnnnnw','3' => 'wnwwnnnnn','4' => 'nnnwwnnnw','5' => 'wnnwwnnnn','6' => 'nnwwwnnnn','7' => 'nnnwnnwnw','8' => 'wnnwnnwnn','9' => 'nnwwnnwnn','A' => 'wnnnnwnnw','B' => 'nnwnnwnnw','C' => 'wnwnnwnnn','D' => 'nnnnwwnnw','E' => 'wnnnwwnnn','F' => 'nnwnwwnnn','G' => 'nnnnnwwnw','H' => 'wnnnnwwnn','I' => 'nnwnnwwnn','J' => 'nnnnwwwnn','K' => 'wnnnnnnww','L' => 'nnwnnnnww','M' => 'wnwnnnnwn','N' => 'nnnnwnnww','O' => 'wnnnwnnwn','P' => 'nnwnwnnwn','Q' => 'nnnnnnwww','R' => 'wnnnnnwwn','S' => 'nnwnnnwwn','T' => 'nnnnnwwwn','U' => 'wwnnnnnnw','V' => 'nwwnnnnnw','W' => 'wwwnnnnnn','X' => 'nwnnwnnnw','Y' => 'wwnnwnnnn','Z' => 'nwwnwnnnn','-' => 'nwnnnnwnw','.' => 'wwnnnnwnn',' ' => 'nwwnnnwnn','*' => 'nwnnwnwnn','$' => 'nwnwnwnnn','/' => 'nwnwnnnwn','+' => 'nwnnnwnwn','%' => 'nnnwnwnwn'];
@@ -112,9 +121,11 @@
             $bars .= '<i style="width:2px;background:transparent"></i>';
         }
     @endphp
+    <div class="keep">
     <div class="barcode" role="img" aria-label="Invoice barcode">{!! $bars !!}</div>
     <p class="c m">{{ $sale->invoice_number }}</p>
     <p class="c" style="margin-bottom:0">Thank You<br><span class="m">{{ $sale->branch?->receipt_footer ?? 'Glad to see you again!' }}</span></p>
+    </div>
 </div>
 </body>
 </html>
