@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'Movements')
+@section('title', 'Stock Movements - BranchOps')
 @section('content')
 <div class="bg-white border"><h1 class="text-xl font-semibold p-6">Stock Movements</h1>
 <table class="min-w-full divide-y"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs uppercase">Product</th><th class="px-6 py-3 text-left text-xs uppercase">Branch</th><th class="px-6 py-3 text-left text-xs uppercase">Change</th><th class="px-6 py-3 text-left text-xs uppercase">Date</th></tr></thead>

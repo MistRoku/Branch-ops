@@ -6,6 +6,21 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'BranchOps Platform')</title>
+    <meta name="description" content="@yield('description', 'BranchOps is a multi-branch retail operations platform with POS, inventory, and back-office reporting.')">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="BranchOps Platform">
+    <meta property="og:title" content="@yield('title', 'BranchOps Platform')">
+    <meta property="og:description" content="@yield('description', 'BranchOps is a multi-branch retail operations platform with POS, inventory, and back-office reporting.')">
+    <meta property="og:image" content="{{ url('/images/og-cover.svg') }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="@yield('title', 'BranchOps Platform')">
+    <meta name="twitter:description" content="@yield('description', 'BranchOps is a multi-branch retail operations platform with POS, inventory, and back-office reporting.')">
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Organization","name":"BranchOps Platform","description":"Multi-branch retail operations platform","url":"{{ url('/') }}"}
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

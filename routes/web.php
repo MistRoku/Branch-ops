@@ -45,3 +45,14 @@ Route::get('/terms', function () {
 Route::get('/privacy', function () {
     return view('auth.privacy');
 })->name('privacy');
+
+// Sitemap for public pages only (app screens require login)
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        ['loc' => route('login'), 'changefreq' => 'monthly', 'priority' => '0.5'],
+        ['loc' => route('terms'), 'changefreq' => 'yearly', 'priority' => '0.3'],
+        ['loc' => route('privacy'), 'changefreq' => 'yearly', 'priority' => '0.3'],
+    ];
+
+    return response()->view('sitemap', compact('urls'))->header('Content-Type', 'text/xml');
+})->name('sitemap');

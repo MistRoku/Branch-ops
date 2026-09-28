@@ -1,17 +1,20 @@
 import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
-
-window.Pusher = window.Pusher ?? Pusher;
 
 let instance = null;
+let pending = null;
 
 /**
- * Lazily create the Echo client. Returns null when realtime is not
- * configured (local dev without Reverb) instead of throwing at boot.
+ * Lazily create the Echo client. pusher-js loads on demand so pages that
+ * never use realtime skip the extra bundle weight. Returns null when
+ * realtime is not configured (local dev without Reverb) instead of
+ * throwing at boot.
  */
 export function getEcho() {
     if (instance !== undefined && instance !== null) {
-        return instance;
+        return Promise.resolve(instance);
+    }
+    if (pending) {
+        return pending;
     }
 
     const key = import.meta.env.VITE_REVERB_APP_KEY;
@@ -19,24 +22,34 @@ export function getEcho() {
 
     if (!key || !host) {
         instance = null;
-        return instance;
+        return Promise.resolve(instance);
     }
 
-    try {
-        instance = new Echo({
-            broadcaster: 'reverb',
-            key,
-            wsHost: host,
-            wsPort: Number(import.meta.env.VITE_REVERB_PORT) || 80,
-            wssPort: Number(import.meta.env.VITE_REVERB_PORT) || 443,
-            forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
-            enabledTransports: ['ws', 'wss'],
+    pending = import('pusher-js')
+        .then((mod) => {
+            window.Pusher = window.Pusher ?? mod.default ?? mod;
+            instance = new Echo({
+                broadcaster: 'reverb',
+                key,
+                wsHost: host,
+                wsPort: Number(import.meta.env.VITE_REVERB_PORT) || 80,
+                wssPort: Number(import.meta.env.VITE_REVERB_PORT) || 443,
+                forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+                enabledTransports: ['ws', 'wss'],
+            });
+
+            return instance;
+        })
+        .catch(() => {
+            instance = null;
+
+            return instance;
+        })
+        .finally(() => {
+            pending = null;
         });
-    } catch {
-        instance = null;
-    }
 
-    return instance;
+    return pending;
 }
 
 /**
@@ -44,8 +57,8 @@ export function getEcho() {
  * broadcasts SaleRecorded on `dashboard` (all branches) or
  * `dashboard.{branchId}`, and StockLowAlert on `dashboard.{branchId}`.
  */
-export function dashboardChannels(branchId) {
-    const echo = getEcho();
+export async function dashboardChannels(branchId) {
+    const echo = await getEcho();
     if (!echo) {
         return [];
     }
@@ -61,8 +74,8 @@ export function dashboardChannels(branchId) {
 /**
  * Bind connection-status callbacks. No-op when Echo is unavailable.
  */
-export function onConnectionChange({ connected, disconnected, connecting }) {
-    const echo = getEcho();
+export async function onConnectionChange({ connected, disconnected, connecting }) {
+    const echo = await getEcho();
     const connection = echo?.connector?.pusher?.connection;
     if (!connection) {
         disconnected?.();

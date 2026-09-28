@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'Valuation')
+@section('title', 'Inventory Valuation - BranchOps')
 @section('content')
 <div class="bg-white border p-6"><h1 class="text-xl font-semibold">Inventory Valuation</h1>
 <p class="text-2xl font-bold mt-2">R{{ number_format($valuation['total_value'] ?? 0, 2) }}</p>

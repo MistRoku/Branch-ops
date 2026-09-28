@@ -6,6 +6,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'POS Terminal - BranchOps')</title>
+    <meta name="description" content="@yield('description', 'BranchOps point of sale: ring up sales, take split payments, print receipts.')">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="BranchOps Platform">
+    <meta property="og:title" content="@yield('title', 'POS Terminal - BranchOps')">
+    <meta property="og:description" content="@yield('description', 'BranchOps point of sale: ring up sales, take split payments, print receipts.')">
+    <meta property="og:image" content="{{ url('/images/og-cover.svg') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

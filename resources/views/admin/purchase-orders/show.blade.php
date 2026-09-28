@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'PO')
+@section('title', 'Purchase Order ' . $po->po_number)
 @section('content')
 <div class="bg-white border p-6 max-w-2xl"><h1 class="text-xl font-semibold">{{ $po->po_number }} — {{ $po->status }}</h1><p class="text-sm">{{ $po->supplier?->name }} · {{ $po->branch?->name }}</p>
 <p class="text-sm text-brand-600 mt-2">Placed by {{ $po->user?->name ?? '—' }} · Received by {{ $po->receivedBy?->name ?? '—' }} @if($po->received_at) on {{ $po->received_at->format('Y-m-d') }} @endif @if($po->grv_number) · GRV {{ $po->grv_number }} @endif</p>

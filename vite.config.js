@@ -11,6 +11,10 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        // No source maps in production builds.
+        sourcemap: false,
+    },
     server: {
         // Fixed for Laragon Apache + `php artisan serve` used together.
         // Use explicit IPv4 loopback so browsers never resolve `http://[::]:5173`

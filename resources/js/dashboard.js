@@ -1,7 +1,4 @@
-import { Chart, registerables } from 'chart.js';
 import { dashboardChannels, onConnectionChange } from './echo';
-
-Chart.register(...registerables);
 
 /**
  * Shared connection-status widget used by both layouts.
@@ -11,7 +8,8 @@ export function connectionStatus() {
         connectionStatus: 'Offline',
         destroy: null,
         init() {
-            this.destroy = onConnectionChange({
+            this.destroy = null;
+            onConnectionChange({
                 connected: () => {
                     this.connectionStatus = 'Connected';
                 },
@@ -21,6 +19,10 @@ export function connectionStatus() {
                 connecting: () => {
                     this.connectionStatus = 'Connecting...';
                 },
+            }).then((stop) => {
+                this.destroy = stop;
+            }).catch(() => {
+                this.connectionStatus = 'Offline';
             });
         },
         destroyHook() {
@@ -41,7 +43,7 @@ export function activityFeed({ activities = [], branchId = null, limit = 10, fee
         destroy: null,
         timer: null,
 
-        init() {
+        async init() {
             const seen = new Set(this.activities.map((a) => a.id));
             const push = (entry) => {
                 if (entry.id && seen.has(entry.id)) {
@@ -61,7 +63,7 @@ export function activityFeed({ activities = [], branchId = null, limit = 10, fee
                 time: item.time ?? item.created_at ?? 'Just now',
             });
 
-            const channels = dashboardChannels(branchId);
+            const channels = await dashboardChannels(branchId);
 
             const cleanups = channels.map((channel) => {
                 const onSale = (e) => {
@@ -130,15 +132,16 @@ export function activityFeed({ activities = [], branchId = null, limit = 10, fee
 }
 
 /**
- * Revenue line chart. Reads labels/values from data attributes so the
- * Blade view stays free of inline JavaScript.
+ * Revenue line chart. Chart.js loads on demand so the main bundle stays
+ * lean on pages without charts. Reads labels/values from data attributes
+ * so the Blade view stays free of inline JavaScript.
  */
 export function revenueChart() {
     return {
         chart: null,
-        init() {
+        async init() {
             const canvas = this.$el;
-            if (!(canvas instanceof HTMLCanvasElement) || typeof Chart === 'undefined') {
+            if (!(canvas instanceof HTMLCanvasElement)) {
                 return;
             }
 
@@ -148,6 +151,19 @@ export function revenueChart() {
                 labels = JSON.parse(canvas.dataset.labels || '[]');
                 values = JSON.parse(canvas.dataset.values || '[]');
             } catch {
+                return;
+            }
+
+            let ChartLib;
+            try {
+                ChartLib = await import('chart.js');
+            } catch {
+                return;
+            }
+            const { Chart, registerables } = ChartLib;
+            Chart.register(...registerables);
+
+            if (!document.contains(canvas)) {
                 return;
             }
 

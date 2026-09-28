@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'Product')
+@section('title', ($product->name ?? 'Product') . ' - Products')
 @section('content')
 <div class="bg-white border p-6 max-w-2xl"><h1 class="text-xl font-semibold">{{ $product->name }}</h1><p class="text-sm text-gray-500">{{ $product->sku }} · {{ $product->supplier?->name }}</p>
 <p class="text-sm mt-2">Sell: R{{ number_format($product->selling_price,2) }} @if(auth()->user()->canSeeCostPrices()) · Cost: R{{ number_format($product->cost_price,2) }}@endif</p>

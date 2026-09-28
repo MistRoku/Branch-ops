@@ -1,6 +1,7 @@
 @extends('components.layouts.guest')
 
 @section('title', 'Login - BranchOps Platform')
+@section('description', 'Sign in to BranchOps to open the POS terminal or back office.')
 
 @section('content')
 <div class="min-h-screen flex items-center justify-center px-4 bg-brand-50">

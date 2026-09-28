@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'Search')
+@section('title', 'Search - BranchOps')
 @section('content')
 <div class="bg-white border p-6 max-w-2xl"><h1 class="text-xl font-semibold">Global Search</h1>
 <form method="GET" action="{{ route('admin.search') }}" class="flex gap-2 mt-4">@csrf

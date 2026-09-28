@@ -1,6 +1,7 @@
 @extends('components.layouts.admin')
 
 @section('title', 'Dashboard - BranchOps Platform')
+@section('description', 'Branch KPIs, 14-day revenue overview, live activity feed, and low-stock alerts.')
 
 @section('content')
 <div class="space-y-6">

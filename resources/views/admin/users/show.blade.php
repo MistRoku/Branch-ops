@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'User')
+@section('title', $user->name . ' - Users')
 @section('content')
 <div class="bg-brand-100 border border-brand-200 p-6 max-w-xl"><h1 class="text-xl font-semibold">{{ $user->name }}</h1>
 <p class="text-sm text-brand-600">{{ $user->email }} · {{ $user->role }} · {{ $user->branch?->name ?? 'No branch' }} · {{ $user->is_active ? 'Active' : 'Inactive' }}</p>

@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'Transfer')
+@section('title', 'Transfer ' . $transfer->transfer_number)
 @section('content')
 <div class="bg-white border p-6 max-w-2xl"><h1 class="text-xl font-semibold">{{ $transfer->transfer_number }} — {{ $transfer->status }}</h1>
 <p class="text-sm">{{ $transfer->fromBranch?->name }} → {{ $transfer->toBranch?->name }}</p>

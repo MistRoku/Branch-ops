@@ -1,6 +1,7 @@
 @extends('components.layouts.pos')
 
 @section('title', 'POS Terminal - BranchOps')
+@section('description', 'Ring up sales, apply specials and coupons, take cash, card or split payments, and print receipts.')
 
 @section('content')
 <div class="h-full flex" :class="compact ? 'pos-compact' : ''" x-data="posTerminal({ branchId: {{ auth()->user()->branch_id ?? 'null' }} })">

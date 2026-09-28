@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'Audit Log')
+@section('title', 'Audit Log Entry - BranchOps')
 @section('content')
 <div class="bg-white border p-6 max-w-2xl"><h1 class="text-xl font-semibold">{{ $log->action }} — {{ $log->entity_type }} #{{ $log->entity_id }}</h1>
 <p class="text-sm text-gray-500">{{ $log->created_at }} · {{ $log->user?->name }} · {{ $log->ip_address }}</p>

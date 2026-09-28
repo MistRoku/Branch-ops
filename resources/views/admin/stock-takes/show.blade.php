@@ -1,5 +1,5 @@
 @extends('components.layouts.admin')
-@section('title', 'Stock Take')
+@section('title', 'Stock Take #' . $take->id . ' - BranchOps')
 @section('content')
 <div class="bg-white border p-6 max-w-2xl"><h1 class="text-xl font-semibold">Take #{{ $take->id }} — {{ $take->status }}</h1><p class="text-sm">{{ $take->branch?->name }}</p>
 <ul class="text-sm mt-4">@foreach($take->items as $it)<li>{{ $it->product?->name }}: system {{ $it->quantity_system }}, counted {{ $it->quantity_counted }}</li>@endforeach</ul>

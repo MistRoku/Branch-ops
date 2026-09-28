@@ -22,4 +22,4 @@ Alpine.data('posLayout', () => connectionStatus());
 Alpine.start();
 
 // Initialise realtime lazily; absence of Reverb config is normal locally.
-getEcho();
+getEcho().catch(() => null);

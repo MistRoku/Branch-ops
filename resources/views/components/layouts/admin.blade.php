@@ -6,6 +6,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'BranchOps Platform')</title>
+    <meta name="description" content="@yield('description', 'BranchOps back office: dashboard, inventory, sales history, purchase orders, and reports.')">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="BranchOps Platform">
+    <meta property="og:title" content="@yield('title', 'BranchOps Platform')">
+    <meta property="og:description" content="@yield('description', 'BranchOps back office: dashboard, inventory, sales history, purchase orders, and reports.')">
+    <meta property="og:image" content="{{ url('/images/og-cover.svg') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +28,7 @@
 </head>
 <body class="bg-brand-50 text-brand-900" style="--brand-accent: {{ auth()->user()?->branch?->accent_color ?? '#2563eb' }}" x-data="connectionStatus">
     <a href="#main-content" class="skip-link">Skip to main content</a>
-    <div class="min-h-screen flex" x-data="{ collapsed: localStorage.getItem('bo-sidebar') === '1' }" x-init="$watch('collapsed', v => localStorage.setItem('bo-sidebar', v ? '1' : '0'))">
+    <div class="min-h-screen flex" x-data="{ collapsed: (() => { try { return localStorage.getItem('bo-sidebar') === '1'; } catch (e) { return false; } })() }" x-init="$watch('collapsed', v => { try { localStorage.setItem('bo-sidebar', v ? '1' : '0'); } catch (e) {} })">
         <!-- Sidebar -->
         <aside class="bg-brand-900 text-white flex-shrink-0 flex flex-col h-screen sticky top-0" :class="collapsed ? 'w-16' : 'w-64'" aria-label="Primary">
             <div class="p-4 border-b border-brand-700 flex items-center gap-3">
